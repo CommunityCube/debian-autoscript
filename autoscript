@@ -1,12 +1,13 @@
+#!/bin/bash
+
 EDITOR=nano
 
 waitakey() { 
 echo
-echo "press a key":44
+echo "press a key"
 read key
 }
 
-apt-get install nginx
 apt-get install nginx
 apt-get install php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear
 mkdir -p /etc/ssl/nginx/
@@ -22,7 +23,17 @@ echo "server {
   root /var/www/html;
   index index.html;
 
-  }" > /etc/nginx/sites-enabled/default
+  }
+  
+  server {
+  listen box.local:80;
+  server_name box.local;
+  root /var/www/html;
+  index index.html;
+
+  }
+  
+  " > /etc/nginx/sites-enabled/default
   
 service nginx restart
 
@@ -33,8 +44,10 @@ mkdir -p /var/lib/tor/hidden_service/{yacy,owncloud,prosody,friendica,box}
 chown debian-tor:debian-tor /var/lib/tor/hidden_service/{yacy,owncloud,prosody,friendica,box} -R
 
 echo "Change RUN_DAEMON to yes"
-waitakey
-nano /etc/default/tor 
+# waitakey
+# $EDITOR /etc/default/tor 
+sed "s~RUN_DAEMON=.*~RUN_DAEMON=\"yes\"~g" -i /etc/default/tor 
+
 
 rm -f /etc/tor/torrc
 cp /usr/share/tor/tor-service-defaults-torrc /etc/tor/torrc
@@ -76,8 +89,32 @@ sleep 5
 apt-get install i2p
 
 echo "Change RUN_DAEMON to true"
-waitakey
-nano /etc/default/i2p
+# waitakey
+# $EDITOR /etc/default/i2p
+sed "s~RUN_DAEMON=.*~RUN_DAEMON=\"true\"~g" -i /etc/default/i2p 
+
+
+service i2p restart
+
+
+cat << EOF > /etc/nginx/sites-enabled/i2p 
+server {
+        listen i2p.local:80;
+        server_name i2p.local;
+
+
+location / {
+    proxy_pass       http://127.0.0.1:7657;
+    proxy_set_header Host      \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+  }
+
+}
+EOF
+
+service nginx restart
+
+
 
 #unbound
 apt-get install unbound
@@ -104,7 +141,9 @@ server:
 
 #Local destinations
 local-zone: "local." static
-local-data: "communitycube.local. IN A 10.0.0.1"' > /etc/unbound/unbound.conf 
+local-data: "communitycube.local. IN A 10.0.0.1"
+local-data: "i2p.local. IN A 10.0.0.1"
+local-data: "tahoe.local. IN A 10.0.0.1"' > /etc/unbound/unbound.conf 
 
 for i in $(ls /var/lib/tor/hidden_service/)
 do
@@ -148,12 +187,17 @@ apt-get install owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apac
 
 echo "Change to"
 echo "  listen = localhost:9000"
-waitakey
-$EDITOR /etc/php5/fpm/pool.d/www.conf 
+sed "s~listen =.*~listen = localhost:9000~g" -i /etc/php5/fpm/pool.d/www.conf 
+# waitakey
+# $EDITOR /etc/php5/fpm/pool.d/www.conf 
 
 echo "Change upload_max_filesize and post_max_size to 2000M"
-waitakey 
-$EDITOR  /etc/php5/fpm/php.ini /etc/php5/cli/php.ini 
+# waitakey 
+sed "s~upload_max_filesize =.*~upload_max_filesize = 2000M~g" -i /etc/php5/fpm/php.ini
+sed "s~upload_max_filesize =.*~upload_max_filesize = 2000M~g" -i /etc/php5/cli/php.ini 
+sed "s~post_max_size =.*~post_max_size = 2000M~g" -i /etc/php5/fpm/php.ini
+sed "s~post_max_size =.*~post_max_size = 2000M~g" -i /etc/php5/cli/php.ini 
+# $EDITOR  /etc/php5/fpm/php.ini /etc/php5/cli/php.ini 
 
 onion=`cat /var/lib/tor/hidden_service/owncloud/hostname`
 
@@ -254,23 +298,213 @@ waitakey
 apt-get install yacy
 
 
-cat << EOF > /etc/nginx/sites-enabled/i2p 
-server {
-        listen i2p.local:7656;
-        server_name _;
-
+hn="$(cat /var/lib/tor/hidden_service/yacy/hostname 2>/dev/null)"
+echo "server {
+        listen yacy.local:80;
+        server_name yacy.local;
 
 location / {
-    proxy_pass       http://127.0.0.1:7657;
+    proxy_pass       http://127.0.0.1:8090;
     proxy_set_header Host      \$host;
     proxy_set_header X-Real-IP \$remote_addr;
   }
 
 }
-EOF
+
+server {
+        listen $hn:80;
+        server_name $hn;
+
+location / {
+    proxy_pass       http://127.0.0.1:8090;
+    proxy_set_header Host      \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+  }
+
+}" > /etc/nginx/sites-enabled/yacy 
+
+#tahoe
+apt-get install i2p-tahoe-lafs
+
+echo 'AUTOSTART="i2p"' > /etc/default/tahoe-lafs 
+
+[ -z "$(grep tahoelafs /etc/group)" ] && addgroup --system tahoelafs
+[ -z "$(grep tahoelafs /etc/passwd)" ] && adduser --disabled-login --system --home /var/lib/tahoe-lafs --shell /bin/bash --no-create-home --ingroup tahoelafs tahoelafs
+mkdir /var/lib/tahoe-lafs/ -p
+
+
+chown tahoelafs:tahoelafs /var/lib/tahoe-lafs -R
+tahoe create-node /var/lib/tahoe-lafs/i2p/
+
+echo 'pb://c6w5ernw7y7rp3uwmdyu5clujyt2y4m4@w2zrwz5gplkkufix7cb4gmxfbrkwg2abnsgk62bm5iifzlahe7kq.b32.i2p/introducer
+pb://exupps5kk3amc5iq4q6f5ahggkm4s5fl@oj7cffq5fnk46iw3i3h2sdgncxrqbxm7wh6i4h2cbpmqsydygkcq.b32.i2p/introducer
+pb://md2tltfmdjvzptg4mznha5zktaxatpmz@5nrsgknvztikjxnpvidlokquojjlsudf7xlnrnyobj7e7trdmuta.b32.i2p/introducer
+pb://fmcbgy7zd6ubrbphilmrlocvb7f327z5@gdr3tt5uewgnm7r7xn54k2qikf2kuwwegjjsnkz44pjticcacsua.b32.i2p/introducer
+pb://tq7rx35yopkvodmsxkqra4qqkbho3yaa@6ga2r2h2fyq6tzcyh6bf3hpio3i7r4edadbq7l4wnh4y62taj6ia.b32.i2p/introducer
+pb://cys5w43lvx3oi5lbgk6liet6rbguekuo@sagljtwlctcoktizkmyv3nyjsuygty6tpkn5riwxlruh3f2oze2q.b32.i2p/introducer
+pb://r3bs6joub24gtsofe7ohnnjcnwfmo2jy@qaihdh5z7osn7tc3326ahv3z46badiuaulff43wchmap7skg7euq.b32.i2p/42mrbm7zxmjemz6hzejo3i7aunx4eoun' > /var/lib/tahoe-lafs/i2p/introducers
+
+
+
+echo "Point your browser to http://i2p.local/i2ptunnel/wizard"
+echo " Server Tunnel > Standard > tahoe/tahoe > 127.0.0.1:3459 > autostart"
+echo
+echo "Then point to http://i2p.local/i2ptunnelmgr"
+echo " and get base32 URL to put in   tub.location ="
+echo "This process can be 5 minutes long. Wait"
+echo
+waitakey
+
+echo "Change config"
+echo "[node]
+nickname = yourpreferednick
+web.port = tcp:3456:interface=127.0.0.1
+web.static = public_html
+http_proxy = 127.0.0.1:4444
+tub.port = 3459
+tub.location= %base32TUB.LOCATION%
+[storage]
+enabled = true
+reserved_space = 20G
+[helper]
+enabled = true"
+
+waitakey
+
+nano /var/lib/tahoe-lafs/i2p/tahoe.cfg
+
+chown tahoelafs:tahoelafs /var/lib/tahoe-lafs -R
+
+service tahoe-lafs restart
+
+echo 'server {
+        listen tahoe.local:80;
+        server_name tahoe.local;
+
+
+location / {
+    proxy_pass       http://127.0.0.1:3456;
+    proxy_set_header Host      $host;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
+}' > /etc/nginx/sites-enabled/tahoe
+
 
 service nginx restart
 
+#phpmyadmin
+echo "If it's asked for a webserver, do not mark any"
+waitakey
+apt-get install phpmyadmin
+
+echo 'server {
+  listen communitycube.local:80;
+  server_name communitycube.local;
+        location /phpmyadmin {
+               root /usr/share/;
+               index index.php index.html index.htm;
+               location ~ ^/phpmyadmin/(.+\.php)$ {
+                       try_files $uri =404;
+                       root /usr/share/;
+                       fastcgi_pass 127.0.0.1:9000;
+                       fastcgi_index index.php;
+                       fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                       include /etc/nginx/fastcgi_params;
+               }
+               location ~* ^/phpmyadmin/(.+\.(jpg|jpeg|gif|css|png|js|ico|html|xml|txt))$ {
+                       root /usr/share/;
+               }
+        }
+        location /phpMyAdmin {
+               rewrite ^/* /phpmyadmin last;
+        }
+}' > /etc/nginx/sites-enabled/phpmyadmin
+
+service nginx restart
+
+#friendica
+apt-get install php5 mysql-server php5-curl php5-gd php5-mysql php5-imap smarty3 git
+
+if [ ! -e  /var/www/friendica ]; then
+mysql -u root -proot
+CREATE DATABASE frndc;
+grant all privileges on frndc.* to  friendica@localhost  identified by 'SuperPass8Wor1_2';
+
+cd /var/www
+git clone https://github.com/friendica/friendica.git
+cd friendica
+git clone https://github.com/friendica/friendica-addons.git addon
+
+chown -R www-data:www-data /var/www/friendica/view/smarty3
+chmod g+w /var/www/friendica/view/smarty3
+touch /var/www/friendica/.htconfig.php
+chown www-data:www-data /var/www/friendica/.htconfig.php
+chmod g+rwx /var/www/friendica/.htconfig.php
+
+fi
+
+if [ -z "$(grep "friendica/include/poller" /etc/crontab)" ]; then
+    echo '*/10 * * * * /usr/bin/php /var/www/friendica/include/poller.php' >> /etc/crontab
+fi
+
+onion="$(cat /var/lib/tor/hidden_service/friendica/hostname 2>/dev/null)"
+if [ ! -e /etc/ssl/nginx/$onion.key -o ! -e /etc/ssl/nginx/$onion.csr -o ! -e  /etc/ssl/nginx/$onion.crt ]; then
+    openssl genrsa -des3 -out /etc/ssl/nginx/$onion.key 2048
+    openssl req -new -key /etc/ssl/nginx/$onion.key -out /etc/ssl/nginx/$onion.csr
+    cp /etc/ssl/nginx/$onion.key /etc/ssl/nginx/$onion.key.org
+    openssl rsa -in /etc/ssl/nginx/$onion.key.org -out /etc/ssl/nginx/$onion.key
+    openssl x509 -req -days 365 -in /etc/ssl/nginx/$onion.csr -signkey /etc/ssl/nginx/$onion.key -out /etc/ssl/nginx/$onion.crt
+fi
+
+cat << EOF > /etc/nginx/sites-enabled/friendica 
+
+server {
+  listen $onion:8181;
+  server_name $onion;
+  return 301 https://\$server_name\$request_uri;
+  }
+
+server {
+  listen friendica.local:80;
+  server_name friendica.local;
+  return 301 https://\$server_name\$request_uri;
+  }
+  
+server {
+  listen 443;
+  ssl on;
+  server_name $onion;
+  ssl_certificate /etc/ssl/nginx/$onion.crt;
+  ssl_certificate_key /etc/ssl/nginx/$onion.key;
+
+  root /var/www/friendica/;
+  index index.php;
+  
+  location / {
+
+    
+    if (!-f \$request_filename) {
+      rewrite ^/(.+)$ /index.php?q=\$1 last;
+    }
+    try_files \$uri \$uri/ =404;
+  }
+
+  location ~* \.php {
+    include fastcgi_params;
+    fastcgi_split_path_info ^(.+\.php)(/.+)\$;
+    fastcgi_param HTTPS on;
+    fastcgi_index index.php;
+    fastcgi_pass 127.0.0.1:9000;
+    try_files \$uri \$uri/ =404;
+  }
+
+  location ~ \..*/.*\.php$ {
+    return 403;
+  }
+
+}
+EOF
 
 #html
 mkdir -p /var/www/html
@@ -284,3 +518,10 @@ cat << EOF >> /var/www/html/index.html
 <a href="http://$hn">$i</a>
 EOF
 done
+
+
+
+
+echo '<a href="http://tahoe.local">tahoe</a>' >> /var/www/html/index.html
+echo '<a href="http://i2p.local">i2p</a>' >> /var/www/html/index.html
+echo '<a href="http://communitycube.local/phpmyadmin">phpmyadmin</a>' >> /var/www/html/index.html
