@@ -18,29 +18,49 @@ echo "upstream php-handler {
   }" > /etc/nginx/sites-enabled/php-fpm
 
 echo "server {
-  listen 80;
-  server_name _;
-  root /var/www/html;
-  index index.html;
+  listen 80 default_server;
+  return 301 http://communitycube.local;
+}
 
-  }
-  
-  server {
+server {
   listen box.local:80;
   server_name box.local;
+  return 301 http://communitycube.local;
+}" > /etc/nginx/sites-enabled/default
+  
+  
+echo "server {
+  listen communitycube.local:80;
+  server_name communitycube.local 10.0.0.1;
   root /var/www/html;
   index index.html;
 
-  }
-  
-  " > /etc/nginx/sites-enabled/default
-  
+        location /phpmyadmin {
+               root /usr/share/;
+               index index.php index.html index.htm;
+               location ~ ^/phpmyadmin/(.+\.php)$ {
+                       try_files \$uri =404;
+                       root /usr/share/;
+                       fastcgi_pass 127.0.0.1:9000;
+                       fastcgi_index index.php;
+                       fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+                       include /etc/nginx/fastcgi_params;
+               }
+               location ~* ^/phpmyadmin/(.+\.(jpg|jpeg|gif|css|png|js|ico|html|xml|txt))$ {
+                       root /usr/share/;
+               }
+        }
+        location /phpMyAdmin {
+               rewrite ^/* /phpmyadmin last;
+        }
+}" > /etc/nginx/sites-enabled/communitycube
+
 service nginx restart
 
 #TOR
 apt-get install tor
 service tor stop
-mkdir -p /var/lib/tor/hidden_service/{yacy,owncloud,prosody,friendica,box}
+mkdir -p /var/lib/tor/hidden_service/{yacy,owncloud,prosody,friendica}
 chown debian-tor:debian-tor /var/lib/tor/hidden_service/{yacy,owncloud,prosody,friendica,box} -R
 
 echo "Change RUN_DAEMON to yes"
@@ -208,6 +228,11 @@ server {
   return 301 https://\$server_name\$request_uri;
   }
   
+  server {
+  listen owncloud.local:80;
+  server_name owncloud.local;
+  return 301 https://$onion\$request_uri;
+  }
 
 server {
   listen $onion:7070;
@@ -301,14 +326,7 @@ apt-get install yacy
 hn="$(cat /var/lib/tor/hidden_service/yacy/hostname 2>/dev/null)"
 echo "server {
         listen yacy.local:80;
-        server_name yacy.local;
-
-location / {
-    proxy_pass       http://127.0.0.1:8090;
-    proxy_set_header Host      \$host;
-    proxy_set_header X-Real-IP \$remote_addr;
-  }
-
+        return 301 http://$onion\$request_uri;
 }
 
 server {
@@ -398,38 +416,18 @@ echo "If it's asked for a webserver, do not mark any"
 waitakey
 apt-get install phpmyadmin
 
-echo 'server {
-  listen communitycube.local:80;
-  server_name communitycube.local;
-        location /phpmyadmin {
-               root /usr/share/;
-               index index.php index.html index.htm;
-               location ~ ^/phpmyadmin/(.+\.php)$ {
-                       try_files $uri =404;
-                       root /usr/share/;
-                       fastcgi_pass 127.0.0.1:9000;
-                       fastcgi_index index.php;
-                       fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-                       include /etc/nginx/fastcgi_params;
-               }
-               location ~* ^/phpmyadmin/(.+\.(jpg|jpeg|gif|css|png|js|ico|html|xml|txt))$ {
-                       root /usr/share/;
-               }
-        }
-        location /phpMyAdmin {
-               rewrite ^/* /phpmyadmin last;
-        }
-}' > /etc/nginx/sites-enabled/phpmyadmin
-
-service nginx restart
+#service nginx restart
 
 #friendica
 apt-get install php5 mysql-server php5-curl php5-gd php5-mysql php5-imap smarty3 git
 
 if [ ! -e  /var/www/friendica ]; then
-mysql -u root -proot
+echo "Enter:
 CREATE DATABASE frndc;
-grant all privileges on frndc.* to  friendica@localhost  identified by 'SuperPass8Wor1_2';
+grant all privileges on frndc.* to  friendica@localhost  identified by 'SuperPass8Wor1_2';"
+
+mysql -u root -proot
+
 
 cd /var/www
 git clone https://github.com/friendica/friendica.git
@@ -458,58 +456,116 @@ if [ ! -e /etc/ssl/nginx/$onion.key -o ! -e /etc/ssl/nginx/$onion.csr -o ! -e  /
 fi
 
 cat << EOF > /etc/nginx/sites-enabled/friendica 
-
 server {
   listen $onion:8181;
   server_name $onion;
-  return 301 https://\$server_name\$request_uri;
+  index index.php;
+  root /var/www/friendica;
+  rewrite ^ https://$onion\$request_uri? permanent;
+  }
+
+server {
+  listen $onion:80;
+  server_name $onion;
+  index index.php;
+  root /var/www/friendica;
+  rewrite ^ https://$onion\$request_uri? permanent;
   }
 
 server {
   listen friendica.local:80;
   server_name friendica.local;
-  return 301 https://\$server_name\$request_uri;
+  index index.php;
+  root /var/www/friendica;
+  rewrite ^ https://$onion\$request_uri? permanent;
   }
-  
+
 server {
-  listen 443;
+  listen $onion:443;
   ssl on;
   server_name $onion;
   ssl_certificate /etc/ssl/nginx/$onion.crt;
   ssl_certificate_key /etc/ssl/nginx/$onion.key;
+  ssl_session_timeout 5m;
+  ssl_protocols SSLv3 TLSv1;
+  ssl_ciphers ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv3:+EXP;
+  ssl_prefer_server_ciphers on;
 
-  root /var/www/friendica/;
   index index.php;
-  
+  charset utf-8;
+  root /var/www/friendica;
+  access_log /var/log/nginx/friendica.log;
+  # allow uploads up to 20MB in size
+  client_max_body_size 20m;
+  client_body_buffer_size 128k;
+
+
+  # rewrite to front controller as default rule
   location / {
-
-    
-    if (!-f \$request_filename) {
-      rewrite ^/(.+)$ /index.php?q=\$1 last;
-    }
-    try_files \$uri \$uri/ =404;
+    rewrite ^/(.*) /index.php?q=\$uri&\$args last;
   }
 
-  location ~* \.php {
-    include fastcgi_params;
-    fastcgi_split_path_info ^(.+\.php)(/.+)\$;
-    fastcgi_param HTTPS on;
-    fastcgi_index index.php;
+  # make sure webfinger and other well known services aren't blocked
+  # by denying dot files and rewrite request to the front controller
+  location ^~ /.well-known/ {
+    allow all;
+    rewrite ^/(.*) /index.php?q=\$uri&\$args last;
+  }
+
+  # statically serve these file types when possible
+  # otherwise fall back to front controller
+  # allow browser to cache them
+  # added .htm for advanced source code editor library
+  location ~* \.(jpg|jpeg|gif|png|ico|css|js|htm|html|ttf|woff|svg)$ {
+    expires 30d;
+    try_files \$uri /index.php?q=\$uri&\$args;
+  }
+  
+  # block these file types
+  location ~* \.(tpl|md|tgz|log|out)$ {
+    deny all;
+  }
+
+  # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+  # or a unix socket
+  location ~* \.php$ {
+    # Zero-day exploit defense.
+    # http://forum.nginx.org/read.php?2,88845,page=3
+    # Won't work properly (404 error) if the file is not stored on this
+    # server, which is entirely possible with php-fpm/php-fcgi.
+    # Comment the 'try_files' line out if you set up php-fpm/php-fcgi on
+    # another machine.  And then cross your fingers that you won't get hacked.
+    try_files \$uri =404;
+
+    # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+    fastcgi_split_path_info ^(.+\.php)(/.+)$;
+
+    # With php5-cgi alone:
     fastcgi_pass 127.0.0.1:9000;
-    try_files \$uri \$uri/ =404;
+
+    # With php5-fpm:
+    #fastcgi_pass unix:/var/run/php5-fpm.sock;
+
+    include fastcgi_params;
+    fastcgi_index index.php;
+    fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
   }
 
-  location ~ \..*/.*\.php$ {
-    return 403;
+  # deny access to all dot files
+  location ~ /\. {
+    deny all;
   }
-
 }
+
+
 EOF
 
+service nginx restart
+
 #html
-mkdir -p /var/www/html
+mkdir -p /var/www/htmlr
 rm -f /var/www/html/index.html
-for i in $(ls /var/lib/tor/hidden_service/)
+for i in $(ls /var/lib/tor/hidden_service/ --ignore=box)
 do
 
 hn="$(cat /var/lib/tor/hidden_service/$i/hostname 2>/dev/null)"
@@ -520,6 +576,10 @@ EOF
 done
 
 
+if [ -z "$(grep apache_get_modules /var/www/friendica/mod/install.php | grep -i function_exists | grep -i '/\*')" ]; then
+    sed "s~if(function_exists('apache_get_modules')).*~/*if(function_exists('apache_get_modules'))~g" -i /var/www/friendica/mod/install.php
+    sed "s~if(! function_exists('curl_init')){.*~*/ if(! function_exists('curl_init')){~g" -i /var/www/friendica/mod/install.php
+fi
 
 
 echo '<a href="http://tahoe.local">tahoe</a>' >> /var/www/html/index.html

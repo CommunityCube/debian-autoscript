@@ -1,0 +1,381 @@
+#!/bin/bash
+
+EDITOR=nano
+
+internet=$(ping -c1 www.google.es >/dev/null 2>/dev/null ; echo $?)
+
+
+if [ "$internet" != "0" ]; then
+  echo "You need internet to proceed. Exiting"
+  exit 7
+fi
+
+dpkg-reconfigure locales
+
+mv /etc/apt/sources.list /etc/apt/sources.list.back
+cat << EOF > /etc/apt/sources.list
+deb http://ftp.us.debian.org/debian wheezy main non-free contrib
+deb-src http://ftp.us.debian.org/debian wheezy main non-free contrib
+EOF
+
+
+#prepare system
+apt-get update
+apt-get install -y debian-keyring uboot-mkimage console-tools debian-keyring subversion build-essential git libncurses5-dev bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils
+
+
+#APTGET
+echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/community/Debian_7.0/ /' > /etc/apt/sources.list.d/owncloud.list
+wget http://download.opensuse.org/repositories/isv:ownCloud:community/Debian_7.0/Release.key
+apt-key add - < Release.key
+rm -f Release.key
+
+echo "deb http://killyourtv.i2p.xyz/debian wheezy main" > /etc/apt/sources.list.d/tahoei2p.list
+
+echo 'deb http://debian.yacy.net ./' > /etc/apt/sources.list.d/yacy.list
+apt-key advanced --keyserver pgp.net.nz --recv-keys 03D886E7
+
+echo 'deb http://deb.i2p2.no/ stable main
+#deb-src http://deb.i2p2.no/ stable main' > /etc/apt/sources.list.d/i2p.list
+wget --no-check-certificate https://geti2p.net/_static/i2p-debian-repo.key.asc
+apt-key add i2p-debian-repo.key.asc
+rm -f i2p-debian-repo.key.asc
+
+echo "deb http://deb.torproject.org/torproject.org wheezy main"  > /etc/apt/sources.list.d/tor.list
+gpg --keyserver keys.gnupg.net --recv 886DDD89
+gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | sudo apt-key add -
+
+linux=$(lsb_release -s -i)
+if "$linux" = "ubuntu" ]; then
+echo "deb http://deb.torproject.org/torproject.org $(lsb_release  -c -s) main"  > /etc/apt/sources.list.d/tor.list
+  echo "deb http://ppa.launchpad.net/i2p.packages/i2p/ubuntu $(lsb_release -c -s) main 
+#deb-src http://ppa.launchpad.net/i2p.packages/i2p/ubuntu $(lsb_release -c -s) main" > /etc/apt/sources.list.d/tahoei2p.list
+  apt-key advanced --keyserver keyserver.ubuntu.com --recv-keys 251E524A4F9AB45202F53A45D1386E5F3FC3365C
+fi
+
+
+apt-get update
+apt-get install -y i2p-keyring deb.torproject.org-keyring
+apt-get update
+
+
+
+rm -f /etc/ssh/ssh_host_*
+if [ ! -e /etc/ssh/ssh_host_dsa_key ]; then
+  echo "Regenerating SSH keys"
+  dpkg-reconfigure openssh-server
+fi
+
+linux=$(lsb_release -s -i)
+if [ "$linux" = "ubuntu" ]; then
+  apt-get install -y ubuntu-extras-keyring ubuntu-keyring
+fi
+
+waitakey() { 
+echo
+echo "press a key"
+read key
+}
+
+
+cat << EOF >  /etc/network/interfaces 
+# interfaces(5) file used by ifup(8) and ifdown(8)
+auto lo
+iface lo inet loopback
+
+#External network interface
+auto eth0
+allow-hotplug eth0
+iface eth0 inet dhcp
+
+#External network interface
+# wireless wlan0
+auto wlan0
+allow-hotplug wlan0
+iface wlan0 inet manual
+
+##External Network Bridge 
+#auto br0
+#allow-hotplug br0
+#iface br0 inet dhcp   
+#    bridge_ports eth0 wlan0
+
+#Internal network interface
+auto eth1
+allow-hotplug eth1
+iface eth1 inet manual
+
+#Internal network interface
+# wireless wlan1
+auto wlan1
+allow-hotplug wlan1
+iface wlan1 inet manual
+
+#Internal network Bridge
+auto br1
+allow-hotplug br1
+# Setup bridge
+iface br1 inet static
+    bridge_ports eth1 wlan1
+    address 10.0.0.1
+    netmask 255.255.255.0
+    network 10.0.0.0
+EOF
+
+
+
+
+apt-get install -y isc-dhcp-server
+sed "s~INTERFACES=.*~INTERFACES=\"br1\"~g" -i  /etc/default/isc-dhcp-server
+
+
+cat << EOF > /etc/dhcp/dhcpd.conf 
+ddns-update-style interim;
+ignore client-updates;
+
+subnet 10.0.0.0 netmask 255.255.255.0 {
+
+# --- default gateway
+        option routers                  10.0.0.1;
+        option subnet-mask              255.255.255.0;
+
+#       option nis-domain               "domain.org";
+        option domain-name              "communitycube.local";
+        option domain-name-servers      10.0.0.1;
+
+#       option time-offset              -18000; # Eastern Standard Time
+#       option ntp-servers              192.168.1.1;
+#       option netbios-name-servers     192.168.1.1;
+# --- Selects point-to-point node (default is hybrid). Don't change this unless
+# -- you understand Netbios very well
+#       option netbios-node-type 2;
+
+        range dynamic-bootp 10.0.0.100 10.0.0.254;
+        default-lease-time 21600;
+        max-lease-time 43200;
+
+}
+EOF
+service isc-dhcp-server restart
+
+
+#HOSTAP
+apt-get install -y hostapd
+sed "s~DAEMON_CONF=.*~DAEMON_CONF=\"/etc/hostapd/hostapd.conf\"~g" -i   /etc/default/hostapd 
+
+cat << EOF >  /etc/hostapd/hostapd.conf 
+### Wireless network name ###
+interface=wlan1
+### Set your bridge name ###
+bridge=br1
+driver=nl80211
+country_code=DE
+ssid=AnnonWLAN
+hw_mode=g
+channel=6
+wpa=2
+wpa_passphrase=MyWifiPassword
+## Key management algorithms ##
+wpa_key_mgmt=WPA-PSK
+## Set cipher suites (encryption algorithms) ##
+## TKIP = Temporal Key Integrity Protocol
+## CCMP = AES in Counter mode with CBC-MAC
+wpa_pairwise=TKIP
+rsn_pairwise=CCMP
+## Shared Key Authentication ##
+auth_algs=1
+## Accept all MAC address ###
+macaddr_acl=0
+EOF
+
+apt-get install -y bridge-utils
+
+
+
+# Macchanger
+
+apt-get install -y macchanger
+
+cat << EOF > /etc/init.d/macchanger.sh
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:            macchanger
+# Required-Start:      mountall-bootclean
+# Required-Stop:
+# X-Start-Before:      networking
+# Should-Start:        glibc
+# Default-Start:       S
+# Default-Stop:        
+# Short-Description:   Randomize the wlan0 and eth0 mac addresses.
+# Description:         Randomize the wlan0 and eth0 mac addresses.  
+### END INIT INFO
+#
+# Written by Someone
+#
+## INSTALLING
+# sudo cp macchanger.sh /etc/init.d/macchanger.sh
+# sudo chmod u+x /etc/init.d/macchanger.sh
+# sudo update-rc.d macchanger.sh start defaults
+
+
+
+PATH=/sbin:/bin
+
+. /lib/init/vars.sh
+. /lib/lsb/init-functions
+
+do_start () {
+        for i in `ls /sys/class/net --ignore=lo --ignore=br*`
+        do
+                /usr/bin/macchanger -r \$i
+        done
+    exit 0
+}
+
+case "\$1" in
+    start|"")
+        do_start
+        ;;
+    restart|reload|force-reload)
+        echo "Error: argument '\$1' not supported." >&2
+        exit 3
+        ;;
+    stop)
+        # No-Op
+        ;;
+    *)
+        echo "Usage: macchanger.sh [start|stop]" >&2
+        exit 3
+        ;;
+esac
+EOF
+
+chmod +x  /etc/init.d/macchanger.sh
+
+update-rc.d macchanger.sh start defaults
+
+
+#NTPDATE
+apt-get install -y ntpdate
+
+sed "s~NTPSERVERS=.*~NTPSERVERS=\"188.174.253.163 195.186.1.101 91.240.0.5 130.60.204.10 0.debian.pool.ntp.org 1.debian.pool.ntp.org 2.debian.pool.ntp.org 3.debian.pool.ntp.org\"~g" -i /etc/default/ntpdate 
+
+
+cat << EOF > /etc/init.d/ntpdate
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:            ntpdate
+# Required-Start:      networking
+# Required-Stop:
+# X-Start-Before:      tor
+# Should-Start:        glibc
+# Default-Start:       S
+# Default-Stop:        
+# Short-Description:   Syncronize clock
+# Description:         Syncronize clock
+### END INIT INFO
+#
+# Written by Someone
+#
+
+
+PATH=/sbin:/bin
+
+. /lib/init/vars.sh
+. /lib/lsb/init-functions
+
+if [ -r /etc/default/ntpdate ]; then
+        . /etc/default/ntpdate
+fi
+
+do_start () {
+         for i in 1 2 3
+         do
+                  /usr/sbin/ntpdate \$NTPSERVERS
+                  sleep 3
+         done
+    exit 0
+}
+
+case "\$1" in
+    start|"")
+        do_start
+        ;;
+    restart|reload|force-reload)
+        echo "Error: argument '\$1' not supported." >&2
+        exit 3
+        ;;
+    stop)
+        # No-Op
+        ;;
+    *)
+        echo "Usage: ntpdate [start|stop]" >&2
+        exit 3
+        ;;
+esac
+EOF
+
+chmod +x  /etc/init.d/ntpdate
+update-rc.d ntpdate start defaults
+
+
+
+
+#tor as DNS
+apt-get install -y tor
+cat << EOF > /etc/tor/torrc
+DNSPort   9053
+DNSListenAddress 10.0.0.1
+VirtualAddrNetworkIPv4 10.192.0.0/16
+AutomapHostsOnResolve 1
+TransPort 9040
+TransListenAddress 10.0.0.1
+SocksPort 9050 # what port to open for local application connectio$
+SocksBindAddress 127.0.0.1 # accept connections only from localhost
+AllowUnverifiedNodes middle,rendezvous
+#Log notice syslog
+EOF
+service tor restart
+
+
+#unbound
+apt-get install -y unbound
+
+echo '# Unbound configuration file for Debian.
+#
+# See the unbound.conf(5) man page.
+#
+# See /usr/share/doc/unbound/examples/unbound.conf for a commented
+# reference config file.
+
+server:
+    # The following line will configure unbound to perform cryptographic
+    # DNSSEC validation using the root trust anchor.
+    interface: 0.0.0.0
+    access-control: 10.0.0.0/8 allow
+    access-control: 127.0.0.1/8 allow
+    access-control: 0.0.0.0/0 refuse
+#    access-control
+#    auto-trust-anchor-file: "/var/lib/unbound/root.key"
+    do-not-query-localhost: no
+#domain-insecure: "onion"
+#private-domain: "onion"
+
+#Local destinations
+local-zone: "local." static
+local-data: "communitycube.local. IN A 10.0.0.1"
+local-data: "i2p.local. IN A 10.0.0.1"
+local-data: "tahoe.local. IN A 10.0.0.1"
+
+#Forward rest of zones to TOR
+forward-zone:
+    name: "."
+    forward-addr: 10.0.0.1@9053' > /etc/unbound/unbound.conf 
+
+service unbound restart
+
+
+
+echo "nameserver 127.0.0.1" > /etc/resolv.conf
+
+chattr +i /etc/resolv.conf
