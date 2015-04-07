@@ -4,13 +4,35 @@ EDITOR=nano
 
 internet=$(ping -c1 www.google.es >/dev/null 2>/dev/null ; echo $?)
 
-
 if [ "$internet" != "0" ]; then
   echo "You need internet to proceed. Exiting"
   exit 7
 fi
 
+if [ "$(whoami)" != "root" ]; then
+  echo "You need to be root to proceed. Exiting"
+  exit 8
+fi
+
 dpkg-reconfigure locales
+
+
+echo "communitycube" > /etc/hostname
+
+cat << EOF > /etc/hosts
+#
+# /etc/hosts: static lookup table for host names
+#
+
+#<ip-address>   <hostname.domain.org>   <hostname>
+127.0.0.1       communitycube.localdomain localhost.localdomain communitycube localhost
+::1             communitycube.localdomain localhost.localdomain communitycube localhost ip6-localhost ip6-loopback
+fe00::0         ip6-localnet
+ff00::0         ip6-mcastprefix
+ff02::1         ip6-allnodes
+ff02::2         ip6-allrouters
+EOF
+
 
 mv /etc/apt/sources.list /etc/apt/sources.list.back
 cat << EOF > /etc/apt/sources.list
@@ -21,7 +43,8 @@ EOF
 
 #prepare system
 apt-get update
-apt-get install -y debian-keyring uboot-mkimage console-tools debian-keyring subversion build-essential git libncurses5-dev bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils
+apt-get install -y aptitude
+aptitude install -y --without-recommends debian-keyring uboot-mkimage console-tools subversion build-essential git libncurses5-dev bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils apt-transport-https
 
 
 #APTGET
@@ -30,7 +53,7 @@ wget http://download.opensuse.org/repositories/isv:ownCloud:community/Debian_7.0
 apt-key add - < Release.key
 rm -f Release.key
 
-echo "deb http://killyourtv.i2p.xyz/debian wheezy main" > /etc/apt/sources.list.d/tahoei2p.list
+echo "deb https://dl.dropboxusercontent.com/u/18621288/debian wheezy main" > /etc/apt/sources.list.d/tahoei2p.list
 
 echo 'deb http://debian.yacy.net ./' > /etc/apt/sources.list.d/yacy.list
 apt-key advanced --keyserver pgp.net.nz --recv-keys 03D886E7
@@ -43,10 +66,10 @@ rm -f i2p-debian-repo.key.asc
 
 echo "deb http://deb.torproject.org/torproject.org wheezy main"  > /etc/apt/sources.list.d/tor.list
 gpg --keyserver keys.gnupg.net --recv 886DDD89
-gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | sudo apt-key add -
+gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | apt-key add -
 
-linux=$(lsb_release -s -i)
-if "$linux" = "ubuntu" ]; then
+linux=$(lsb_release -s -i | tr [A-Z] [a-z])
+if [ "$linux" = "ubuntu" ]; then
 echo "deb http://deb.torproject.org/torproject.org $(lsb_release  -c -s) main"  > /etc/apt/sources.list.d/tor.list
   echo "deb http://ppa.launchpad.net/i2p.packages/i2p/ubuntu $(lsb_release -c -s) main 
 #deb-src http://ppa.launchpad.net/i2p.packages/i2p/ubuntu $(lsb_release -c -s) main" > /etc/apt/sources.list.d/tahoei2p.list
@@ -55,7 +78,7 @@ fi
 
 
 apt-get update
-apt-get install -y i2p-keyring deb.torproject.org-keyring
+apt-get install -y i2p-keyring deb.torproject.org-keyring killyourtv-keyring
 apt-get update
 
 
@@ -66,7 +89,7 @@ if [ ! -e /etc/ssh/ssh_host_dsa_key ]; then
   dpkg-reconfigure openssh-server
 fi
 
-linux=$(lsb_release -s -i)
+linux=$(lsb_release -s -i | tr [A-Z] [a-z])
 if [ "$linux" = "ubuntu" ]; then
   apt-get install -y ubuntu-extras-keyring ubuntu-keyring
 fi

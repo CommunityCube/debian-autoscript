@@ -1,0 +1,406 @@
+#!/bin/bash
+
+EDITOR=nano
+
+internet=$(ping -c1 www.google.es >/dev/null 2>/dev/null ; echo $?)
+
+if [ "$internet" != "0" ]; then
+  echo "You need internet to proceed. Exiting"
+  exit 7
+fi
+
+if [ "$(whoami)" != "root" ]; then
+  echo "You need to be root to proceed. Exiting"
+  exit 8
+fi
+
+
+# linux=$(lsb_release -s -i | tr [A-Z] [a-z])
+# if [ "$linux" = "ubuntu" ]; then
+#   apt-get install -y ubuntu-extras-keyring ubuntu-keyring
+# fi
+
+waitakey() { 
+echo
+echo "press a key"
+read key
+}
+
+
+#Privoxy
+apt-get install -y privoxy
+
+/etc/init.d/privoxy stop
+rm -f /etc/rc?.d/*privoxy*
+
+
+#Privoxy I2P
+
+cat << EOF > /etc/privoxy/config-i2p
+user-manual /usr/share/doc/privoxy/user-manual
+confdir /etc/privoxy
+logdir /var/log/privoxy
+filterfile default.filter
+#logfile logfile #it's said produces fails cause errors logging I2P ipv6 ips
+listen-address  127.0.0.1:8118
+#debug     1 # Log the destination for each request Privoxy let through. See also debug 1024.
+#debug     2 # show each connection status
+#debug     4 # show I/O status
+#debug     8 # show header parsing
+#debug    16 # log all data written to the network
+#debug    32 # debug force feature
+#debug    64 # debug regular expression filters
+#debug   128 # debug redirects
+#debug   256 # debug GIF de-animation
+#debug   512 # Common Log Format
+#debug  1024 # Log the destination for requests Privoxy didn't let through, and the reason why.
+#debug  2048 # CGI user interface
+#debug  4096 # Startup banner and warnings.
+#debug  8192 # Non-fatal errors
+#debug 32768 # log all data read from the network
+#debug 65536 # Log the applying actions
+toggle  1
+enable-remote-toggle  0
+enable-remote-http-toggle  0
+enable-edit-actions 0
+enforce-blocks 0
+buffer-limit 4096
+forwarded-connect-retries  0
+accept-intercepted-requests 1
+allow-cgi-request-crunching 0
+split-large-forms 0
+keep-alive-timeout 5
+socket-timeout 300
+
+forward .i2p 127.0.0.1:4444
+EOF
+
+cp /etc/init.d/privoxy /etc/init.d/privoxy-i2p
+
+sed "s~Provides:.*~Provides:          privoxy-i2p~g" -i  /etc/init.d/privoxy-i2p 
+sed "s~PIDFILE=.*~PIDFILE=/var/run/\$NAME-i2p.pid~g" -i  /etc/init.d/privoxy-i2p 
+sed "s~CONFIGFILE=.*~CONFIGFILE=/etc/privoxy/config-i2p~g" -i /etc/init.d/privoxy-i2p 
+sed "s~SCRIPTNAME=.*~SCRIPTNAME=/etc/init.d/\$NAME-i2p~g" -i /etc/init.d/privoxy-i2p 
+
+
+update-rc.d privoxy-i2p defaults
+service privoxy-i2p restart
+
+
+#Privoxy TOR
+
+cat << EOF > /etc/privoxy/config-tor 
+forward-socks4a / 127.0.0.1:9050 .
+confdir /etc/privoxy
+logdir /var/log/privoxy
+actionsfile default.action   # Main actions file
+actionsfile user.action      # User customizations
+filterfile default.filter
+
+logfile logfile
+
+debug   4096 # Startup banner and warnings
+debug   8192 # Errors - *we highly recommended enabling this*
+
+user-manual /usr/share/doc/privoxy/user-manual
+listen-address  127.0.0.1:8119
+toggle  1
+enable-remote-toggle 0
+enable-edit-actions 0
+enable-remote-http-toggle 0
+buffer-limit 4096
+EOF
+
+
+cp /etc/init.d/privoxy /etc/init.d/privoxy-tor
+sed "s~Provides:.*~Provides:          privoxy-tor~g" -i  /etc/init.d/privoxy-tor
+sed "s~PIDFILE=.*~PIDFILE=/var/run/\$NAME-tor.pid~g" -i  /etc/init.d/privoxy-tor
+sed "s~CONFIGFILE=.*~CONFIGFILE=/etc/privoxy/config-tor~g" -i /etc/init.d/privoxy-tor
+sed "s~SCRIPTNAME=.*~SCRIPTNAME=/etc/init.d/\$NAME-tor~g" -i /etc/init.d/privoxy-tor
+
+
+update-rc.d privoxy-tor defaults
+service privoxy-tor restart
+
+
+# Squid
+apt-get install -y ssquid3
+rm -f /etc/rc?.d/*squid*
+/etc/init.d/squid3 stop
+
+# squid TOR
+
+cat << EOF > /etc/squid3/squid-tor.conf 
+cache_peer 127.0.0.1 parent 8119 7 no-query no-digest
+
+acl manager proto cache_object
+acl localhost src 127.0.0.1/32 ::1
+acl to_localhost dst 127.0.0.0/8 0.0.0.0/32 ::1
+
+acl localnet src 10.0.0.0/8     # RFC1918 possible internal network
+
+acl SSL_ports port 443
+acl Safe_ports port 80          # http
+acl Safe_ports port 21          # ftp
+acl Safe_ports port 443         # https
+acl Safe_ports port 70          # gopher
+acl Safe_ports port 210         # wais
+acl Safe_ports port 1025-65535  # unregistered ports
+acl Safe_ports port 280         # http-mgmt
+acl Safe_ports port 488         # gss-http
+acl Safe_ports port 591         # filemaker
+acl Safe_ports port 777         # multiling http
+acl CONNECT method CONNECT
+
+http_access allow localnet
+http_access allow localhost
+http_access allow all
+http_access deny all
+
+http_access deny manager
+
+http_access deny !Safe_ports
+
+http_access deny CONNECT !SSL_ports
+
+http_access deny all
+
+http_port 3129 transparent
+
+hierarchy_stoplist cgi-bin ?
+
+never_direct allow all
+
+cache_store_log none
+
+pid_filename /var/run/squid3-tor.pid
+
+cache_log /var/log/squid3/cache.log
+
+coredump_dir /var/spool/squid3
+
+#url_rewrite_program /usr/bin/squidGuard
+
+no_cache deny all
+EOF
+
+cp /etc/init.d/squid3 /etc/init.d/squid3-tor
+sed "s~Provides:.*~Provides:          squid3-tor~g" -i  /etc/init.d/squid3-tor
+sed "s~PIDFILE=.*~PIDFILE=/var/run/squid3-tor.pid~g" -i  /etc/init.d/squid3-tor
+sed "s~CONFIG=.*~CONFIG=/etc/squid3/squid-tor.conf~g" -i /etc/init.d/squid3-tor
+
+update-rc.d squid3-tor start defaults
+service squid3-tor restart
+
+
+
+#Squid I2P
+
+cat << EOF > /etc/squid3/squid-i2p.conf
+cache_peer 127.0.0.1 parent 8118 7 no-query no-digest
+
+acl manager proto cache_object
+acl localhost src 127.0.0.1/32 ::1
+acl to_localhost dst 127.0.0.0/8 0.0.0.0/32 ::1
+
+acl localnet src 10.0.0.0/8     # RFC1918 possible internal network
+
+acl SSL_ports port 443
+acl Safe_ports port 80          # http
+acl Safe_ports port 21          # ftp
+acl Safe_ports port 443         # https
+acl Safe_ports port 70          # gopher
+acl Safe_ports port 210         # wais
+acl Safe_ports port 1025-65535  # unregistered ports
+acl Safe_ports port 280         # http-mgmt
+acl Safe_ports port 488         # gss-http
+acl Safe_ports port 591         # filemaker
+acl Safe_ports port 777         # multiling http
+acl CONNECT method CONNECT
+
+http_access allow localnet
+http_access allow localhost
+http_access allow all
+http_access deny all
+
+http_access deny manager
+
+http_access deny !Safe_ports
+
+http_access deny CONNECT !SSL_ports
+
+http_access deny all
+
+http_port 3128 transparent
+
+hierarchy_stoplist cgi-bin ?
+
+never_direct allow all
+
+cache_store_log none
+
+pid_filename /var/run/squid3-i2p.pid
+
+cache_log /var/log/squid3/cache.log
+
+coredump_dir /var/spool/squid3
+
+#url_rewrite_program /usr/bin/squidGuard
+
+no_cache deny all
+
+EOF
+
+cp /etc/init.d/squid3 /etc/init.d/squid3-i2p
+
+cp /etc/init.d/squid3 /etc/init.d/squid3-i2p
+sed "s~Provides:.*~Provides:          squid3-i2p~g" -i  /etc/init.d/squid3-i2p
+sed "s~PIDFILE=.*~PIDFILE=/var/run/squid3-i2p.pid~g" -i  /etc/init.d/squid3-i2p
+sed "s~CONFIG=.*~CONFIG=/etc/squid3/squid-i2p.conf~g" -i /etc/init.d/squid3-i2p
+
+update-rc.d squid3-i2p start defaults
+service squid3-i2p restart
+
+
+#Squidguard
+
+echo "Squidguard will NOT be installed"
+waitakey
+
+mkdir -p /etc/blacklists
+cd /etc/blacklists
+
+cat << EOF > /etc/blacklists/update-blacklists.sh
+#!/bin/bash
+
+#squidguard DB
+mkdir -p /etc/blacklists/shallalist/tmp 
+cd /etc/blacklists/shallalist/tmp
+wget http://www.shallalist.de/Downloads/shallalist.tar.gz
+tar xvzf shallalist.tar.gz ; res=\$?
+rm -f shallalist.tar.gz
+if [ "\$res" = 0 ]; then
+ rm -fr /etc/blacklists/shallalist/ok
+ mv /etc/blacklists/shallalist/tmp /etc/blacklists/shallalist/ok
+else
+ rm -fr /etc/blacklists/shallalist/tmp 
+fi
+
+mkdir -p /etc/blacklists/urlblacklist/tmp
+cd /etc/blacklists/urlblacklist/tmp
+wget http://urlblacklist.com/cgi-bin/commercialdownload.pl?type=download\\&file=bigblacklist -O urlblacklist.tar.gz
+tar xvzf urlblacklist.tar.gz ; res=\$?
+rm -f urlblacklist.tar.gz
+if [ "\$res" = 0 ]; then
+ rm -fr /etc/blacklists/urlblacklist/ok
+ mv /etc/blacklists/urlblacklist/tmp /etc/blacklists/urlblacklist/ok
+else
+ rm -fr /etc/blacklists/urlblacklist/tmp 
+fi
+
+
+mkdir -p /etc/blacklists/mesdk12/tmp
+cd /etc/blacklists/mesdk12/tmp
+wget http://squidguard.mesd.k12.or.us/blacklists.tgz
+tar xvzf blacklists.tgz ; res=\$?
+rm -f blacklists.tgz
+if [ "\$res" = 0 ]; then
+ rm -fr /etc/blacklists/mesdk12/ok
+ mv /etc/blacklists/mesdk12/tmp /etc/blacklists/mesdk12/ok
+else
+ rm -fr /etc/blacklists/mesdk12/tmp 
+fi
+
+mkdir -p /etc/blacklists/capitole/tmp
+cd /etc/blacklists/capitole/tmp
+wget ftp://ftp.ut-capitole.fr/pub/reseau/cache/squidguard_contrib/publicite.tar.gz
+tar xvzf publicite.tar.gz ; res=\$?
+rm -f publicite.tar.gz
+if [ "\$res" = 0 ]; then
+ rm -fr /etc/blacklists/capitole/ok
+ mv /etc/blacklists/capitole/tmp /etc/blacklists/capitole/ok
+else
+ rm -fr /etc/blacklists/capitole/tmp 
+fi
+
+
+# chown proxy:proxy -R /etc/blacklists/*
+
+EOF
+
+chmod +x /etc/blacklists/update-blacklists.sh
+/etc/blacklists/update-blacklists.sh
+
+
+cat << EOF > /etc/blacklists/blacklists-iptables.sh
+#ipset implementation for nat
+for i in \$(grep -iv [A-Z] /etc/blacklists/shallalist/ok/BL/adv/domains)
+do
+  iptables -t nat -I PREROUTING -i br1 -s 10.0.0.0/16 -p tcp -d \$i -j DNAT --to-destination 5.5.5.5
+done
+EOF
+
+chmod +x /etc/blacklists/blacklists-iptables.sh
+
+#Iptables
+cat << EOF > /etc/rc.local
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+
+
+iptables -F
+iptables -F -tnat
+
+#Allow ssh from internal to Communitycube and allow SSH to external servers
+iptables -t nat -A PREROUTING -i br1 -p tcp -d 10.0.0.1 --dport 22 -j REDIRECT --to-ports 22
+
+#Allow internal access to
+iptables -t nat -A PREROUTING -i br1 -p tcp -d 10.0.0.1 --dport 80 -j REDIRECT --to-ports 80
+iptables -t nat -A PREROUTING -i br1 -p tcp -d 10.0.0.1 --dport 443 -j REDIRECT --to-ports 443
+iptables -t nat -A PREROUTING -i br1 -p tcp -d 10.0.0.1 --dport 7000 -j REDIRECT --to-ports 7000
+
+
+#i2p petitions 
+iptables -t nat -A OUTPUT     -d 10.191.0.1 -p tcp --dport 80 -j REDIRECT --to-port 3128
+iptables -t nat -A PREROUTING -d 10.191.0.1 -p tcp --dport 80 -j REDIRECT --to-port 3128
+iptables -t nat -A PREROUTING -i br1 -p tcp -m tcp --sport 80 -d 10.191.0.1 -j REDIRECT --to-ports 3128 
+
+#Allow surf onion zone
+iptables -t nat -A PREROUTING -p tcp -d 10.192.0.0/16 -j REDIRECT --to-port 9040
+iptables -t nat -A OUTPUT     -p tcp -d 10.192.0.0/16 -j REDIRECT --to-port 9040
+
+###### WORK MODE 1 #####
+# use TOR for regular and TOR requests
+
+#iptables -t nat -A PREROUTING -i br1 -p tcp --syn -j REDIRECT --to-ports 9040
+
+
+####### WORK MODE 2 #####
+# use TOR for TOR petitions
+# use Squid for the rest
+
+#regular 80 port traffic to squid
+iptables -t nat -A PREROUTING -i br1 -s 10.0.0.0/16 -p tcp --dport 80 -j REDIRECT --to-port 3129
+
+#rest for TOR
+iptables -t nat -A PREROUTING -i br1 -p tcp --syn -m multiport ! --dports 80 -j REDIRECT --to-ports 9040
+
+
+[ -e /etc/blacklists/blacklists-iptables.sh ] && /etc/blacklists/blacklists-iptables.sh &
+
+exit 0
+EOF
+
+chmod +x /etc/rc.local
+
+/etc/rc.local

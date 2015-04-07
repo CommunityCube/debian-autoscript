@@ -2,14 +2,27 @@
 
 EDITOR=nano
 
+internet=$(ping -c1 www.google.es >/dev/null 2>/dev/null ; echo $?)
+if [ "$internet" != "0" ]; then
+  echo "You need internet to proceed. Exiting"
+  exit 7
+fi
+
+
+if [ "$(whoami)" != "root" ]; then
+  echo "You need to be root to proceed. Exiting"
+  exit 8
+fi
+
+
 waitakey() { 
 echo
 echo "press a key"
 read key
 }
 
-apt-get install nginx
-apt-get install php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear
+apt-get install -y nginx
+apt-get install -y php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear
 mkdir -p /etc/ssl/nginx/
 
 echo "upstream php-handler {
@@ -58,10 +71,17 @@ echo "server {
 service nginx restart
 
 #TOR
-apt-get install tor
+apt-get install -y tor
 service tor stop
-mkdir -p /var/lib/tor/hidden_service/{yacy,owncloud,prosody,friendica}
-chown debian-tor:debian-tor /var/lib/tor/hidden_service/{yacy,owncloud,prosody,friendica,box} -R
+tordir=/var/lib/tor/hidden_service
+for i in yacy owncloud prosody friendica mailpile box
+do
+
+mkdir -p $tordir/$i
+chown debian-tor:debian-tor $tordir/$i -R
+rm -f $tordir/$i/*
+
+done
 
 echo "Change RUN_DAEMON to yes"
 # waitakey
@@ -105,8 +125,19 @@ service tor start
 
 sleep 5
 
+found=no
+for i in 1 2 3 4 5 6 7 8 9 10
+do
+  if [ -e "$tordir/owncloud/hostname" ]; then
+    echo "Tor configuration OK"
+    break
+  else
+    sleep 10
+  fi
+done
+
 #i2p
-apt-get install i2p
+apt-get install -y i2p
 
 echo "Change RUN_DAEMON to true"
 # waitakey
@@ -137,7 +168,7 @@ service nginx restart
 
 
 #unbound
-apt-get install unbound
+apt-get install -y unbound
 
 echo '# Unbound configuration file for Debian.
 #
@@ -203,7 +234,7 @@ forward-zone:
 service unbound restart
 
 #owncloud
-apt-get install owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apache2.2-common-
+apt-get install -y owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apache2.2-common-
 
 echo "Change to"
 echo "  listen = localhost:9000"
@@ -219,33 +250,33 @@ sed "s~post_max_size =.*~post_max_size = 2000M~g" -i /etc/php5/fpm/php.ini
 sed "s~post_max_size =.*~post_max_size = 2000M~g" -i /etc/php5/cli/php.ini 
 # $EDITOR  /etc/php5/fpm/php.ini /etc/php5/cli/php.ini 
 
-onion=`cat /var/lib/tor/hidden_service/owncloud/hostname`
+hn=`cat /var/lib/tor/hidden_service/owncloud/hostname`
 
 cat << EOF > /etc/nginx/sites-enabled/owncloud 
 server {
-  listen $onion:80;
-  server_name $onion;
+  listen $hn:80;
+  server_name $hn;
   return 301 https://\$server_name\$request_uri;
   }
   
   server {
   listen owncloud.local:80;
   server_name owncloud.local;
-  return 301 https://$onion\$request_uri;
+  return 301 https://$hn\$request_uri;
   }
 
 server {
-  listen $onion:7070;
-  server_name $onion;
+  listen $hn:7070;
+  server_name $hn;
   return 301 https://\$server_name\$request_uri;
   }
 
 server {
-  listen $onion:443;
+  listen $hn:443;
   ssl on;
-  server_name $onion;
-  ssl_certificate /etc/ssl/nginx/$onion.crt;
-  ssl_certificate_key /etc/ssl/nginx/$onion.key;
+  server_name $hn;
+  ssl_certificate /etc/ssl/nginx/$hn.crt;
+  ssl_certificate_key /etc/ssl/nginx/$hn.key;
 
   # Path to the root of your installation
   root /var/www/owncloud/;
@@ -303,30 +334,33 @@ server {
   }
 EOF
 
-if [ ! -e /etc/ssl/nginx/$onion.key -o ! -e /etc/ssl/nginx/$onion.csr -o ! -e  /etc/ssl/nginx/$onion.crt ]; then
-    openssl genrsa -des3 -out /etc/ssl/nginx/$onion.key 2048
-    openssl req -new -key /etc/ssl/nginx/$onion.key -out /etc/ssl/nginx/$onion.csr
-    cp /etc/ssl/nginx/$onion.key /etc/ssl/nginx/$onion.key.org
-    openssl rsa -in /etc/ssl/nginx/$onion.key.org -out /etc/ssl/nginx/$onion.key
-    openssl x509 -req -days 365 -in /etc/ssl/nginx/$onion.csr -signkey /etc/ssl/nginx/$onion.key -out /etc/ssl/nginx/$onion.crt
+if [ ! -e /etc/ssl/nginx/$hn.key -o ! -e /etc/ssl/nginx/$h.csr -o ! -e  /etc/ssl/nginx/$hn.crt ]; then
+    openssl genrsa -des3 -out /etc/ssl/nginx/$hn.key 2048
+    openssl req -new -key /etc/ssl/nginx/$hn.key -out /etc/ssl/nginx/$hn.csr
+    cp /etc/ssl/nginx/$hn.key /etc/ssl/nginx/$hn.key.org
+    openssl rsa -in /etc/ssl/nginx/$hn.key.org -out /etc/ssl/nginx/$hn.key
+    openssl x509 -req -days 365 -in /etc/ssl/nginx/$hn.csr -signkey /etc/ssl/nginx/$hn.key -out /etc/ssl/nginx/$hn.crt
 fi
 
 service php5-fpm restart
 service nginx restart
 
 #Java
-apt-get install openjdk-7-jre-headless
+apt-get install -y openjdk-7-jre-headless
+apt-get remove -y openjdk-6-jre-headless
+apt-get remove -y openjdk-6-jre-lib
+
 
 #Yacy
-echo "On ask, 300Mb"
+echo "On ask, maximum 300Mb"
 waitakey
-apt-get install yacy
+apt-get install -y yacy
 
 
 hn="$(cat /var/lib/tor/hidden_service/yacy/hostname 2>/dev/null)"
 echo "server {
         listen yacy.local:80;
-        return 301 http://$onion\$request_uri;
+        return 301 http://$hn\$request_uri;
 }
 
 server {
@@ -342,13 +376,17 @@ location / {
 }" > /etc/nginx/sites-enabled/yacy 
 
 #tahoe
-apt-get install i2p-tahoe-lafs
+apt-get install -y i2p-tahoe-lafs
+
+service tahoe-lafs stop
+
 
 echo 'AUTOSTART="i2p"' > /etc/default/tahoe-lafs 
 
+mkdir /var/lib/tahoe-lafs/ -p
+
 [ -z "$(grep tahoelafs /etc/group)" ] && addgroup --system tahoelafs
 [ -z "$(grep tahoelafs /etc/passwd)" ] && adduser --disabled-login --system --home /var/lib/tahoe-lafs --shell /bin/bash --no-create-home --ingroup tahoelafs tahoelafs
-mkdir /var/lib/tahoe-lafs/ -p
 
 
 chown tahoelafs:tahoelafs /var/lib/tahoe-lafs -R
@@ -414,20 +452,20 @@ service nginx restart
 #phpmyadmin
 echo "If it's asked for a webserver, do not mark any"
 waitakey
-apt-get install phpmyadmin
+apt-get install -y phpmyadmin
 
 #service nginx restart
 
 #friendica
-apt-get install php5 mysql-server php5-curl php5-gd php5-mysql php5-imap smarty3 git
+apt-get install -y php5 mysql-server php5-curl php5-gd php5-mysql php5-imap smarty3 git
+
+if [ ! -e  /var/lib/mysql/frndc ]; then
+  echo "Enter root mysql password"
+  echo "CREATE DATABASE frndc;
+grant all privileges on frndc.* to  friendica@localhost  identified by 'SuperPass8Wor1_2';" | mysql -u root -p
+fi
 
 if [ ! -e  /var/www/friendica ]; then
-echo "Enter:
-CREATE DATABASE frndc;
-grant all privileges on frndc.* to  friendica@localhost  identified by 'SuperPass8Wor1_2';"
-
-mysql -u root -proot
-
 
 cd /var/www
 git clone https://github.com/friendica/friendica.git
@@ -563,7 +601,7 @@ EOF
 service nginx restart
 
 #html
-mkdir -p /var/www/htmlr
+mkdir -p /var/www/html
 rm -f /var/www/html/index.html
 for i in $(ls /var/lib/tor/hidden_service/ --ignore=box)
 do
