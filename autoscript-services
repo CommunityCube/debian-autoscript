@@ -2,7 +2,7 @@
 
 EDITOR=nano
 
-internet=$(ping -c1 www.google.es >/dev/null 2>/dev/null ; echo $?)
+internet=$(ping -c1 www.communitycube.net >/dev/null 2>/dev/null ; echo $?)
 if [ "$internet" != "0" ]; then
   echo "You need internet to proceed. Exiting"
   exit 7
@@ -36,14 +36,14 @@ echo "server {
 }
 
 server {
-  listen box.local:80;
+  listen 80;
   server_name box.local;
   return 301 http://communitycube.local;
 }" > /etc/nginx/sites-enabled/default
   
   
 echo "server {
-  listen communitycube.local:80;
+  listen 80;
   server_name communitycube.local 10.0.0.1;
   root /var/www/html;
   index index.html;
@@ -150,7 +150,7 @@ service i2p restart
 
 cat << EOF > /etc/nginx/sites-enabled/i2p 
 server {
-        listen i2p.local:80;
+        listen 80;
         server_name i2p.local;
 
 
@@ -194,12 +194,12 @@ server:
 local-zone: "local." static
 local-data: "communitycube.local. IN A 10.0.0.1"
 local-data: "i2p.local. IN A 10.0.0.1"
-local-data: "tahoe.local. IN A 10.0.0.1"' > /etc/unbound/unbound.conf 
+local-data: "tahoe.local. IN A 10.0.0.1"' > /etc/unbound/unbound.conf-static
 
 for i in $(ls /var/lib/tor/hidden_service/)
 do
 
-cat << EOF >>  /etc/unbound/unbound.conf 
+cat << EOF >>  /etc/unbound/unbound.conf-static
 local-data: "$i.local.  IN A 10.0.0.1"
 EOF
 
@@ -211,7 +211,7 @@ do
 hn="$(cat /var/lib/tor/hidden_service/$i/hostname 2>/dev/null)"
 
 if [ -n "$hn" ]; then
-cat << EOF >>  /etc/unbound/unbound.conf 
+cat << EOF >>  /etc/unbound/unbound.conf-static
 
 local-zone: "$hn." static
 local-data: "$hn. IN A 10.0.0.1"
@@ -224,13 +224,16 @@ done
 echo '
 #I2P domains
 local-zone: "i2p" redirect
-local-data: "i2p A 10.191.0.1"
+local-data: "i2p A 10.191.0.1"' >> /etc/unbound/unbound.conf-static
 
-#Forward rest of zones to TOR
+echo '#Forward rest of zones to TOR
 forward-zone:
     name: "."
-    forward-addr: 10.0.0.1@9053' >> /etc/unbound/unbound.conf 
+    forward-addr: 10.0.0.1@9053' > /etc/unbound/forward.conf
 
+cat /etc/unbound/unbound.conf-static > /etc/unbound/unbound.conf
+echo "include: /etc/unbound/forward.conf" >> /etc/unbound/unbound.conf
+    
 service unbound restart
 
 #owncloud
@@ -254,25 +257,32 @@ hn=`cat /var/lib/tor/hidden_service/owncloud/hostname`
 
 cat << EOF > /etc/nginx/sites-enabled/owncloud 
 server {
-  listen $hn:80;
+  listen 80;
   server_name $hn;
   return 301 https://\$server_name\$request_uri;
   }
   
+server {
+        listen 10.0.0.253;
+        server_name _;
+        return 301 https://$hn;
+}
+  
+  
   server {
-  listen owncloud.local:80;
+  listen 80;
   server_name owncloud.local;
   return 301 https://$hn\$request_uri;
   }
 
 server {
-  listen $hn:7070;
+  listen 7070;
   server_name $hn;
   return 301 https://\$server_name\$request_uri;
   }
 
 server {
-  listen $hn:443;
+  listen 443;
   ssl on;
   server_name $hn;
   ssl_certificate /etc/ssl/nginx/$hn.crt;
@@ -359,12 +369,19 @@ apt-get install -y yacy
 
 hn="$(cat /var/lib/tor/hidden_service/yacy/hostname 2>/dev/null)"
 echo "server {
-        listen yacy.local:80;
+        listen 80;
+        server_name yacy.local;
         return 301 http://$hn\$request_uri;
 }
 
 server {
-        listen $hn:80;
+        listen 10.0.0.251;
+        server_name _;
+        return 301 http://$hn;
+}
+
+server {
+        listen 80;
         server_name $hn;
 
 location / {
@@ -434,7 +451,7 @@ chown tahoelafs:tahoelafs /var/lib/tahoe-lafs -R
 service tahoe-lafs restart
 
 echo 'server {
-        listen tahoe.local:80;
+        listen 80;
         server_name tahoe.local;
 
 
@@ -495,7 +512,7 @@ fi
 
 cat << EOF > /etc/nginx/sites-enabled/friendica 
 server {
-  listen $onion:8181;
+  listen 8181;
   server_name $onion;
   index index.php;
   root /var/www/friendica;
@@ -503,7 +520,7 @@ server {
   }
 
 server {
-  listen $onion:80;
+  listen 80;
   server_name $onion;
   index index.php;
   root /var/www/friendica;
@@ -511,7 +528,13 @@ server {
   }
 
 server {
-  listen friendica.local:80;
+        listen 10.0.0.252;
+        server_name _;
+        return 301 https://$onion;
+}
+  
+server {
+  listen 80;
   server_name friendica.local;
   index index.php;
   root /var/www/friendica;
@@ -519,7 +542,7 @@ server {
   }
 
 server {
-  listen $onion:443;
+  listen 443;
   ssl on;
   server_name $onion;
   ssl_certificate /etc/ssl/nginx/$onion.crt;
