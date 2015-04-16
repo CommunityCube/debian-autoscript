@@ -2,7 +2,7 @@
 
 EDITOR=nano
 
-internet=$(ping -c1 www.google.es >/dev/null 2>/dev/null ; echo $?)
+internet=$(ping -c1 www.communitycube.net >/dev/null 2>/dev/null ; echo $?)
 
 if [ "$internet" != "0" ]; then
   echo "You need internet to proceed. Exiting"
@@ -143,6 +143,35 @@ iface br1 inet static
     address 10.0.0.1
     netmask 255.255.255.0
     network 10.0.0.0
+    
+
+#Yacy
+auto eth1:1
+allow-hotplug eth1:1
+iface eth1:1 inet static
+    address 10.0.0.251
+    netmask 255.255.255.0
+    
+#Friendica
+auto eth1:2
+allow-hotplug eth1:2
+iface eth1:2 inet static
+    address 10.0.0.252
+    netmask 255.255.255.0
+    
+#OwnCloud
+auto eth1:3
+allow-hotplug eth1:3
+iface eth1:3 inet static
+    address 10.0.0.253
+    netmask 255.255.255.0
+    
+#Mailpile
+auto eth1:4
+allow-hotplug eth1:4
+iface eth1:4 inet static
+    address 10.0.0.254
+    netmask 255.255.255.0
 EOF
 
 
@@ -314,7 +343,12 @@ fi
 do_start () {
          for i in 1 2 3
          do
+                  adate=$(date +D%)
                   /usr/sbin/ntpdate \$NTPSERVERS
+                  udate=$(date +D%)
+                  if [ "$udate" = "$adate" ]; then
+                    break
+                  fi
                   sleep 3
          done
     exit 0
