@@ -5,10 +5,7 @@ Then your computers and devices should be connected to DHCP network served in et
 
 
 
-                   -----------------
-internal network --| CommunityCube | -- internet
-    10.0.0.x       |   10.0.0.1    | eth0/wlan0
- (br1) eth1/wlan1  -----------------
+internal net (eth1/wlan1) - CageOS - internet (eth0/wlan09
 
 
  
