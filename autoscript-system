@@ -44,7 +44,7 @@ EOF
 #prepare system
 apt-get update
 apt-get install -y aptitude
-aptitude install -y --without-recommends debian-keyring uboot-mkimage console-tools subversion build-essential git libncurses5-dev bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils apt-transport-https
+aptitude install -y --without-recommends debian-keyring uboot-mkimage console-tools subversion build-essential git libncurses5-dev bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils apt-transport-https unzip
 
 
 #APTGET
@@ -53,6 +53,9 @@ wget http://download.opensuse.org/repositories/isv:ownCloud:community/Debian_7.0
 apt-key add - < Release.key
 rm -f Release.key
 
+echo "deb http://packages.prosody.im/debian $(lsb_release -sc) main" > /etc/apt/sources.list.d/prosody.list
+wget https://prosody.im/files/prosody-debian-packages.key -O- | apt-key add -
+ 
 echo "deb https://dl.dropboxusercontent.com/u/18621288/debian wheezy main" > /etc/apt/sources.list.d/tahoei2p.list
 
 echo 'deb http://debian.yacy.net ./' > /etc/apt/sources.list.d/yacy.list
