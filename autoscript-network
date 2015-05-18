@@ -124,7 +124,7 @@ service privoxy-tor restart
 
 
 # Squid
-apt-get install -y ssquid3
+apt-get install -y squid3
 rm -f /etc/rc?.d/*squid*
 /etc/init.d/squid3 stop
 
