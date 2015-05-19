@@ -10,6 +10,7 @@ internal net (eth1/wlan1) - CageOS - internet (eth0/wlan09
 
  
 Execution order it's:
+
 1- autoscript-system
 It prepares whole system, APT repos, network, hostapd (for wlan1), DHCP server for br1, TOR as dns resolver, macchanger on each reboot, ntpdate 
 
