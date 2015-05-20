@@ -38,6 +38,13 @@ mv /etc/apt/sources.list /etc/apt/sources.list.back
 cat << EOF > /etc/apt/sources.list
 deb http://ftp.us.debian.org/debian wheezy main non-free contrib
 deb-src http://ftp.us.debian.org/debian wheezy main non-free contrib
+
+deb http://ftp.debian.org/debian/ wheezy-updates main contrib non-free
+deb-src http://ftp.debian.org/debian/ wheezy-updates main contrib non-free
+
+deb http://security.debian.org/ wheezy/updates main contrib non-free
+deb-src http://security.debian.org/ wheezy/updates main contrib non-free
+
 EOF
 
 
