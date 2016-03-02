@@ -1,0 +1,33 @@
+#!/bin/bash -e
+##
+##  Build the bootstrap target system. Currently it's verified with QEMU.
+##
+##  By Duzy Chan <code@duzy.info>.
+##
+VERSION='0.0.0.1'
+
+if [ "$(whoami)" == "root" ]; then
+    echo "You don't need to run as root. I will ask you to if needed."
+    exit 1
+fi
+
+if [[ ! -f bootstrap/sink || ! -f bootstrap/build ]]; then
+    echo "You must do this bootstrap from the top project directory!"
+    exit 2
+fi
+
+#base=ftp.cn.debian.org
+base=ftp.debian.org
+arch=amd64
+release=jessie
+dest=bootstrap/debian/$release/$arch
+
+mkdir -p "$dest" || {
+    echo "Creating directory '$dest' failed!"
+    exit 10
+}
+
+sudo bootstrap/sink --foreign --arch $arch $release $dest "http://$base/debian/" || {
+    echo "Failed to sink '$dest'!"
+    exit 11
+}
