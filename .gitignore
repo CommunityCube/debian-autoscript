@@ -1,2 +1,5 @@
 *~
 /bootstrap/debian/
+/bootstrap/kernel
+/bootstrap/initrd.img
+/bootstrap/rootfs.img

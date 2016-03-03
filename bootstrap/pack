@@ -1,0 +1,45 @@
+#!/bin/bash
+##
+##  pack - create qemu image from the rootfs
+##
+##  By Duzy Chan <code@duzy.info>.
+##
+if [ "$(whoami)" == "root" ]; then
+    echo "I don't need root priviliges!"
+    exit 1
+fi
+
+. bootstrap/config
+
+if [[ -z "$arch" || -z "$dest" || -z "$release" ]]; then
+    echo "Bad configuration ($arch, $dest, $release)!"
+    exit 2
+fi
+
+qemu-img create bootstrap/rootfs.img 1G && mkfs.ext2 bootstrap/rootfs.img
+
+rm -f bootstrap/initrd.img bootstrap/kernel
+ln -s ../$dest/boot/initrd.img-$kernel_suffix bootstrap/initrd.img
+ln -s ../$dest/boot/vmlinuz-$kernel_suffix bootstrap/kernel
+mkdir -p bootstrap/rootfs
+
+sudo mount -o loop bootstrap/rootfs.img bootstrap/rootfs || {
+    echo "Mount failed!"
+    exit 3
+}
+
+sudo rsync -a $dest bootstrap/rootfs || {
+    echo "Archive failed!"
+    sudo umount
+    exit 4
+}
+
+sudo chown -R root:root bootstrap/rootfs || {
+    echo "Chainging ownership failed!"
+    sudo umount
+    exit 5
+}
+
+sync
+
+sudo umount bootstrap/rootfs

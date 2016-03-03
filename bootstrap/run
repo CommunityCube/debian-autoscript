@@ -1,0 +1,17 @@
+#!/bin/bash
+##
+##  run - run the bootstrap image on QEMU
+##
+##  By Duzy Chan <code@duzy.info>.
+##
+if [[ ! -f bootstrap/initrd || ! -f bootstrap/kernel || ! -f bootstrap/rootfs.img ]]; then
+    echo "You must do this bootstrap from the top project directory!"
+    echo "Make sure that the bootstrap image is built!"
+    exit 1
+fi
+
+. bootstrap/config
+
+qemu-system-x86_64 -kernel bootstrap/kernel -initrd bootstrap/initrd \
+    -hda bootstrap/rootfs.img -append "console=ttyS0 root=/dev/hda" \
+    -nographic

@@ -1,6 +1,6 @@
 #!/bin/bash -e
 ##
-##  Build the bootstrap target system. Currently it's verified with QEMU.
+##  Build the bootstrap target system. Currently it's going to be verified with QEMU.
 ##
 ##  By Duzy Chan <code@duzy.info>.
 ##
@@ -16,18 +16,42 @@ if [[ ! -f bootstrap/sink || ! -f bootstrap/build ]]; then
     exit 2
 fi
 
-#base=ftp.cn.debian.org
-base=ftp.debian.org
-arch=amd64
-release=jessie
-dest=bootstrap/debian/$release/$arch
+. bootstrap/config
+
+if [[ -z "$arch" || -z "$dest" || -z "$release" ]]; then
+    echo "Bad configuration ($arch, $dest, $release)!"
+    exit 3
+fi
 
 mkdir -p "$dest" || {
     echo "Creating directory '$dest' failed!"
     exit 10
 }
 
-sudo bootstrap/sink --foreign --arch $arch $release $dest "http://$base/debian/" || {
-    echo "Failed to sink '$dest'!"
-    exit 11
-}
+if [[ ! -x "$dest/bin/login" || ! -x "$dest/usr/bin/passwd" || ! -x "$dest/bin/bash" || ! -x "$dest/bin/pwd" || ! -f "$dest/usr/lib/os-release" ]]; then
+    if [[ ! -x "$dest/bootstrap/bootstrap" || ! -f "$dest/bootstrap/devices.tar.gz" || ! -f "$dest/bootstrap/functions" || ! -f "$dest/bootstrap/arch" || ! -f "$dest/bootstrap/base" ]]; then
+        sudo bootstrap/sink --foreign --arch $arch $release $dest "http://$base/debian/" || {
+            echo "Failed to sink '$dest'!"
+            exit 11
+        }
+    else
+        echo "Bootstrap already sinked."
+    fi
+
+    DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+        LC_ALL=C LANGUAGE=C LANG=C sudo chroot $dest /bootstrap/bootstrap --second-stage
+fi
+
+DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+    LC_ALL=C LANGUAGE=C LANG=C sudo chroot $dest dpkg --configure -a
+
+sudo bootstrap/install
+
+for M in $(cat modules/list) ; do
+    if [ -f "modules/$M/install" ]; then
+        bash "modules/$M/install" || {
+            echo "Install module $M failed..."
+            exit 128
+        }
+    fi
+done

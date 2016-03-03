@@ -1,0 +1,7 @@
+# -*- shell-script -*-
+#base=ftp.debian.org
+base=ftp.cn.debian.org
+arch=amd64
+release=jessie
+dest=bootstrap/debian/$release/$arch
+kernel_suffix=3.16.0-4-amd64

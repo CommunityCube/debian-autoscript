@@ -1,0 +1,41 @@
+#!/bin/bash -e
+##
+##  install - install basic packages to the destination
+##
+##  By Duzy Chan <code@duzy.info>.
+##
+if [ "$(whoami)" != "root" ]; then
+    echo "I need root priviliges!"
+    exit 1
+fi
+
+. bootstrap/config
+
+if [[ -z "$arch" || -z "$dest" || -z "$release" ]]; then
+    echo "Bad configuration ($arch, $dest, $release)!"
+    exit 3
+fi
+
+echo "CommunityCube" > $dest/etc/hostname
+
+cat << EOF > $dest/etc/apt/sources.list
+deb http://ftp.us.debian.org/debian $release main non-free contrib
+deb-src http://ftp.us.debian.org/debian $release main non-free contrib
+
+deb http://ftp.debian.org/debian/ $release-updates main contrib non-free
+deb-src http://ftp.debian.org/debian/ $release-updates main contrib non-free
+
+deb http://security.debian.org/ $release/updates main contrib non-free
+deb-src http://security.debian.org/ $release/updates main contrib non-free
+EOF
+
+#deb http://security.debian.org/debian-security jessie/updates main
+
+if [ "$arch" != "amd64" ]; then
+    echo "Only amd64 is supported for now!"
+    exit 4
+fi
+
+#chroot $dest apt-get update
+#chroot $dest apt-get install -y aptitude
+chroot $dest apt-get install -y linux-image-$kernel_suffix
