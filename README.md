@@ -53,7 +53,7 @@ Bad people with bad intentions like:
 
 A picture worth more than 10.000 words:
 
-![infrastructurediagram](https://cloud.githubusercontent.com/assets/4359120/13481321/e9e5d608-e0b6-11e5-9168-8f66ae8ea968.png)
+![Infrastructure Diagram](https://cloud.githubusercontent.com/assets/4359120/13481776/9c7af250-e0ba-11e5-86f9-1de7cc6ce9f4.jpg)
 
 ## How to collaborate?
 
