@@ -24,8 +24,19 @@
 ** Methods to work on the rootfs (development purpose)          :CC:Base:Dev:
    We're going to use QEMU quickly work in the base. This will give others (devs or someone from the community)
    a way to get involved. We also need a managed way to assembly a good result from the efforts of the community.
+*** Very fundamental packages                    :CC:Base:Dev:Initialization:
+    Some packages might be widely used by other packages or in real life. These packages could be installed before
+    futher installation.
 *** A method to wrap external efforts              :CC:Base:Dev:Modulization:
-    
+    An external effort could be contributed by anyone from the community. We need the 
+**** A module manager to assembly individual efforts :CC:Base:Dev:Modulization:Manager:
+     A well designed manager to assembly and build external contribution into the system. A contribution should be
+     wrapped into a *module*.
+**** A common way to contribute a module :CC:Base:Dev:Modulization:Interfaces:
+     The devs, external individuals are trying to contribute a valuable efforts to the system. The job needs to be
+     done in a common way. Our own customization and parameterization should also be done in such way. So that we
+     will enable different forces to work on different kind of task, and tested in the development QEMU. If some
+     task requires to be tested in a real environment, it could be done after the integration.
 ** To run in a physical machine                            :CC:Base:Physical:
    We will need the ISO image and burn it to a DVD or USB stick for installation on a Intel or AMD machine.
 
@@ -35,4 +46,3 @@
 * Creating an installer for the prepared distribution
 ** Installer same as [[DebianInstaller]]
 ** Making ISO image with the Installer
-
