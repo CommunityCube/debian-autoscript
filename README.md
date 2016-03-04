@@ -6,13 +6,19 @@ _Discover how two geeks invented a kick-ass technology that helps normal people 
 
 ## What is Community Cube(C-Cube)?
 
-It is a mini-server that can replace your router, work with your router or connect to another ***C-Cube*** by mesh based on a OpenSource: community, drivers and hardware.
+***COMMUNITY CUBE*** is a technology that makes protecting your privacy easy. Thanks to a unique combination of  open hardware and software, it’s both a server and a provider of free secure services. You can trust us, we are fully open.
 
-## A little context...
+***C-Cube*** is a plug and play, open source, energy efficient server designed from the ground up with security and privacy in mind.
 
-As part of Open Source of community ***C-Cube*** target to build a complete and plug-and-play solution intended to bypass censorship, gov/spy agencies, and anything that could get in danger your privacy.
+###Why do we need this technology?
 
-Community Cube initiative is a __Peered Cooperativeness Project__ that intends to be the biggest world wide cooperative company allowing investment only to purchase of *boxes* and connecting them to the ***C-Cube*** network. All the buyers has two possibilities, be a shareholder or not.
+The Internet is full of ___free___ services. Most are offered by __large corporations__ that work for the _common good_. Right? 
+
+**NOT TRUE!**. They are giving you something for _free_ because they want something in return - your personal data.  By **burying** the details in their _terms and conditions page_, that ***almost nobody reads***, they are in fact hiding their nefarious intentions.
+
+**Community Cube** operates exactly the opposite, because we integrate into each **C-Cube** a carefully selected  security audited services, you no longer need to depend on the good intentions of these big corporations.
+
+Community Cube initiative work as a __Peered Cooperativeness Project__ that intends to be the biggest world wide cooperative company allowing investment only to purchase of *boxes* and connecting them to the ***C-Cube*** network. 
 
 ## What ain't Community Cube? (..and will never be)
 
@@ -20,19 +26,13 @@ Community Cube initiative is a __Peered Cooperativeness Project__ that intends t
 - Head managed.
 - Difficult to use.
 
-## Features
+## Features Comparison
 
-- Cloud Storage (Powered by [OwnCloud](http://owncloud.org/))
-- Voice/Video IM
-- DNS
-- Email
-- Search Engine (Powered by [Yacy](yacy.net/))
-- GRID computing
-- Connection Sharing
-- Anonymized traffic HotSpot
-- CDN
-- Service Gateways
-- Backup of all your data... Even if your box is stolen or something.
+Some of __C-Cube__ services has being provided by some time, but un-integrated and with some flaws, let's show you:
+
+![Services](https://ksr-ugc.imgix.net/assets/003/699/855/2679953ba748e512d3ec207f732d1bb2_original.jpg?v=1430329011&w=680&fit=max&auto=format&q=92&s=b7153d55686098a5c8a52ef9a57e10bd)
+
+If you want more information about the software that we picked check [here](https://cageos.org/index.php?page=apps).
 
 ## Why not just use existing Darknets/F2net?
 
@@ -48,12 +48,28 @@ Bad people with bad intentions like:
 - **Malicious internet nodes**: better known as _blackbones_.
 - **Your internet provider (ISP)**: if they would trying anything with your data.
 
+## How does it protect me?
+
+In technical words , to protect you, Community Cube does:
+
+ - Filtering virus, exploits _malware_, ads , bad IP-sources and bad content.
+ - Decentralizing the services (doing impossible to apply big data to you )
+ - Open authentication (dissolve legal relation between user and name-ip), Dark-nets (anonymisation of IP)
+ - Forcing encryption for all communications and data storage and in rest.
+ - Filtering the data that expose you, like scripts,cookies, browser info,etc.
+
 
 ## How C-Cube network works?
 
-A picture worth more than 10.000 words:
+In our decentralized system your valuable information is encrypted three times:
 
-![Infrastructure Diagram](https://cloud.githubusercontent.com/assets/4359120/13481776/9c7af250-e0ba-11e5-86f9-1de7cc6ce9f4.jpg)
+1. Before it even leaves your computer, in the web browser
+2. In the collaboration tool before the data goes to the hard disk
+3. When backing up to the grid, the slices will also be encrypted.
+
+![CCube Network](https://ksr-ugc.imgix.net/assets/003/699/998/0698df91b8b2e9e1c61368ae8eeb7798_original.jpg?v=1430330247&w=680&fit=max&auto=format&q=92&s=e140edd32e6462fdd221c8b299bc965f)
+
+You want more information, you can check [here](https://cageos.org/index.php?page=network) for more information or [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=communitycube_overview) for a lot more information.
 
 ## How to collaborate?
 
@@ -65,33 +81,20 @@ This is on discussion yet, but the idea is to offer a solution that can be deplo
 
 - Low-end model - Odroid C1:
 
-|:Description:|:Cost:|:Currency:|
-|--------|----|---|
-|Odroid C1  | 38|  €|
-|ssd 8gbc10|  7  | €|
-|USB2ETH |9   |€|
-|2xWLAN 1watt|    17 | €|
-|Batteries|   20  |€|
-|CASE|    19  |€|
-|RoboPeak Usb tft screen  | 45   |€|
-|subTOTAL|    156 |€|
-|Assembly|    33  |€|
-|TOTAL|    190 |€|
+|Low-end model - Odroid C1| High-end model - Odroid XU4|
+|--------|--------|
+|Odroid C1  | Odroid XU4 |
+|ssd 8gbc10|ssd 8gbc10|
+|USB2ETH | HDD 2TB|
+|2xWLAN 1watt| SB2ETH |
+|Batteries|2xWLAN 1watt|
+|CASE| CASE|
+|RoboPeak Usb tft screen  |RoboPeak Usb tft screen  |
 
-- High-end model - Odroid XU3 Lite:
+![XU4](https://ksr-ugc.imgix.net/assets/003/944/858/1dd038cc6d011fae2e9c64b3373f26aa_original.jpg?v=1433797073&w=680&fit=max&auto=format&q=92&s=7465889c0357eb0ccbaf781a4c0e7016)
 
-|:Description:|:Cost:|:Currency:|
-|--------|----|---|
-|Odroid XU3  | 99|  €|
-|ssd 8gbc10|  7  | €|
-|HDD 2TB|75|€|
-|USB2ETH |9   |€|
-|2xWLAN 1watt|    17 | €|
-|CASE|    19  |€|
-|RoboPeak Usb tft screen  | 45   |€|
-|subTOTAL|    272 |€|
-|Assembly|    33  |€|
-|TOTAL|    310 |€|
+More information [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=technical:hardware:communitycube_-_odroid_xu3_lite).
+
 
 ## Setup
 <!-- this part needs to be refactored by someone that does know the current state of building process -->
