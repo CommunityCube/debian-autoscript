@@ -79,11 +79,11 @@ Easy as fork us and send pull requests, but if you want to get in touch with us 
 
 This is on discussion yet, but the idea is to offer a solution that can be deployable on a public distribution with your own hardware, but as standalone  we have this models:
 
-- Low-end model - Odroid C1:
+- **C-Cube** has two presentations:
 
-|Low-end model - Odroid C1| High-end model - Odroid XU4|
+|Low-end model - Odroid C2| High-end model - Odroid XU4|
 |--------|--------|
-|Odroid C1  | Odroid XU4 |
+|Odroid C2  | Odroid XU4 |
 |ssd 8gbc10|ssd 8gbc10|
 |USB2ETH | HDD 2TB|
 |2xWLAN 1watt| SB2ETH |
