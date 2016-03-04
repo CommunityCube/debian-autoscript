@@ -2,15 +2,37 @@
 #+LINK: DebianInstaller https://wiki.debian.org/DebianInstaller
 #+LINK: SimpleCDDHowto https://wiki.debian.org/Simple-CDD/Howto
 
-* Making a customized rootfs (bootstrap)
-  The bootstrap is creating a root filesystem able to boot into a shell with network and apt supports.
-  * Methods to work on the rootfs (development purpose)
-    Using QEMU
-* Customization and Parameterization based on the bootstrap
-  This part will be ignored for now.
+* Making a base root filesystem                                     :CC:Base:
+  The bootstrap is creating a basic root filesystem (rootfs). Further efforts should be done in the base.
+  The base is providing an identical environment to everyone (devs, geek, hacker, etc) involved. 
+** Root filesystem                                           :CC:Base:RootFS:
+   This is the base system. It should boot into a shell terminal with networks and Debian APT supported.
+*** The package manager                                         :CC:Base:APT:
+    With the networking enabled for the base, a fully funtional debian package manager should be configured.
+    This is the basic facility to extend the system to different variants.
+**** Using the official debian package source      :CC:Base:APT:OriginSource:
+     While using the official debian package source, we derived the hardware compatibilities from Debian. Say,
+     if Debian is able to run on Odroid board, our distro could too.
+***** Compatibility Verification
+      Some POC (proof-of-concept) efforts could be spent to examing the hardward compatibility. If we're going to
+      provide very serious hardware supports, this might require lots of efforts.
+**** Build specific package source server for Community Cube :CC:Base:APT:SpecificSource:
+     This is actually optional, without this, the official debian package should work. The specific source
+     server obviously require extra resources, it could expend into lots of works to do.
+***** Package error fixing or refining or customization.
+      Per package (apt) refining is possible with the our own specific package source host.
+** Methods to work on the rootfs (development purpose)          :CC:Base:Dev:
+   We're going to use QEMU quickly work in the base. This will give others (devs or someone from the community)
+   a way to get involved. We also need a managed way to assembly a good result from the efforts of the community.
+*** A method to wrap external efforts              :CC:Base:Dev:Modulization:
+    
+** To run in a physical machine                            :CC:Base:Physical:
+   We will need the ISO image and burn it to a DVD or USB stick for installation on a Intel or AMD machine.
+
+* Customization and Parameterization over the base
+  This part will be ignored for now. This could be done by modules and the module manager.
+
 * Creating an installer for the prepared distribution
-  * Installer same as [[DebianInstaller]]
-  * Making ISO image with the Installer
-
-
+** Installer same as [[DebianInstaller]]
+** Making ISO image with the Installer
 

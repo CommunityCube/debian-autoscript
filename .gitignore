@@ -3,3 +3,5 @@
 /bootstrap/kernel
 /bootstrap/initrd.img
 /bootstrap/rootfs.img
+/doc/*.log
+/doc/roadmap.tex
