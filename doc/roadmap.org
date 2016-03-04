@@ -28,7 +28,8 @@
     Some packages might be widely used by other packages or in real life. These packages could be installed before
     futher installation.
 *** A method to wrap external efforts              :CC:Base:Dev:Modulization:
-    An external effort could be contributed by anyone from the community. We need the 
+    An external effort could be contributed by anyone from the community. We need to assembly these individual
+    contribution.
 **** A module manager to assembly individual efforts :CC:Base:Dev:Modulization:Manager:
      A well designed manager to assembly and build external contribution into the system. A contribution should be
      wrapped into a *module*.
