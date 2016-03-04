@@ -1,0 +1,16 @@
+#+STARTUP: clean
+#+LINK: DebianInstaller https://wiki.debian.org/DebianInstaller
+#+LINK: SimpleCDDHowto https://wiki.debian.org/Simple-CDD/Howto
+
+* Making a customized rootfs (bootstrap)
+  The bootstrap is creating a root filesystem able to boot into a shell with network and apt supports.
+  * Methods to work on the rootfs (development purpose)
+    Using QEMU
+* Customization and Parameterization based on the bootstrap
+  This part will be ignored for now.
+* Creating an installer for the prepared distribution
+  * Installer same as [[DebianInstaller]]
+  * Making ISO image with the Installer
+
+
+
