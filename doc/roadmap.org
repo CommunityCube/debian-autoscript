@@ -72,7 +72,7 @@ A sample to demonstrate how it's made and develop it in the QEMU.
 We will need the ISO image and burn it to a DVD or USB stick for installation on a Intel or AMD machine.
 *** TODO Instructions for making a bootable DVD or USB stick
 This should be quite easy, existing tools are out there. Just need to demonstrate how to do it for end users.
-** [/] Pended discussion raised in the group
+** [/] Things pended for discussion
 Deciding how much are going to customize it. Actually we should put all package installation to the
 [[install-community-cube-system][module installation]].
 *** [ ] systemd
