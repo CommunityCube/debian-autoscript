@@ -91,6 +91,7 @@ system. We need to define modules to perform tasks for the features.
 *** TODO Web apps
 This is actually defined by the business modle.
 *** TODO OwnCloud
+*** ...
 ** Do we need a GUI or CPanel?
 This is our <<user interface>> concern. Here, a GUI means setting up a *Window System*, say X. And a CPanel
 is a web interface towards a Community Cube box (a maching running our system).
