@@ -1,49 +1,113 @@
-#+STARTUP: clean
+#+TITLE: Roadmap
+#+AUTHOR: Duzy Chan
+#+EMAIL: code@duzy.info
+#+DATE: <2016-03-04 Fri>
+#+DESCRIPTION: Roadmap for the distro.
 #+LINK: DebianInstaller https://wiki.debian.org/DebianInstaller
 #+LINK: SimpleCDDHowto https://wiki.debian.org/Simple-CDD/Howto
-
-* Making a base root filesystem                                     :CC:Base:
-  The bootstrap is creating a basic root filesystem (rootfs). Further efforts should be done in the base.
-  The base is providing an identical environment to everyone (devs, geek, hacker, etc) involved. 
-** Root filesystem                                           :CC:Base:RootFS:
-   This is the base system. It should boot into a shell terminal with networks and Debian APT supported.
-*** The package manager                                         :CC:Base:APT:
-    With the networking enabled for the base, a fully funtional debian package manager should be configured.
-    This is the basic facility to extend the system to different variants.
+#+OPTIONS: 
+#+STARTUP: indent
+#+STARTUP: oddeven
+* TODO [0/6] Making a base system                                   :CC:Base:
+The bootstrap is creating a basic root filesystem (rootfs). Further efforts should be done in the base.
+The base is providing an identical environment to everyone (devs, geek, hacker, etc) involved.
+** TODO [1/1] Preparing Root filesystem                      :CC:Base:RootFS:
+This is where we start things up. It should boot into a shell terminal with networks and Debian APT supported.
+*** Why rootfs?                                        :CC:Base:RootFS:Why:
+Base on the needs of the Community Cube system, we might not have much customization on the rootfs. I think
+this is good. But one the most critical reason is to have a *predictable* and *identical* base system for
+the team and others might be involved. This is very important to make the system unified so that contributions
+is happing in the same environment.
+*** DONE Creating the rootfs
+I think the initial rootfs is done in the bootstrap.
+** TODO [0/1] Creating bootable images for QEMU
+We are going to use the kernel image from Debian instead building it ourselves. The bootable images are
+making the root filesystem to alive for usage (development and test purposes).
+*** TODO Bring up the image in QEMU
+** TODO Network configuration
+This is done in the QEMU to bring up the network manager.
+** TODO [/] The package manager                                 :CC:Base:APT:
+With the networking enabled for the base, a fully funtional debian package manager should be configured.
+This is the basic facility to extend the system to different variants.
 **** Using the official debian package source      :CC:Base:APT:OriginSource:
-     While using the official debian package source, we derived the hardware compatibilities from Debian. Say,
-     if Debian is able to run on Odroid board, our distro could too.
+While using the official debian package source, we derived the hardware compatibilities from Debian. Say,
+if Debian is able to run on Odroid board, our distro could too.
 ***** Compatibility Verification
-      Some POC (proof-of-concept) efforts could be spent to examing the hardward compatibility. If we're going to
-      provide very serious hardware supports, this might require lots of efforts.
+Some POC (proof-of-concept) efforts could be spent to exame the hardward compatibility. If we're going to
+provide very serious hardware supports, this might require lots of efforts.
 **** Build specific package source server for Community Cube :CC:Base:APT:SpecificSource:
-     This is actually optional, without this, the official debian package should work. The specific source
-     server obviously require extra resources, it could expend into lots of works to do.
+This is actually *optional*, without this, the official debian package server should work. The specific
+source server obviously require extra resources, it could expend into lots of works to do.
 ***** Package error fixing or refining or customization.
-      Per package (apt) refining is possible with the our own specific package source host.
-** Methods to work on the rootfs (development purpose)          :CC:Base:Dev:
-   We're going to use QEMU quickly work in the base. This will give others (devs or someone from the community)
-   a way to get involved. We also need a managed way to assembly a good result from the efforts of the community.
-*** Very fundamental packages                    :CC:Base:Dev:Initialization:
-    Some packages might be widely used by other packages or in real life. These packages could be installed before
-    futher installation.
-*** A method to wrap external efforts              :CC:Base:Dev:Modulization:
-    An external effort could be contributed by anyone from the community. We need to assembly these individual
-    contribution.
-**** A module manager to assembly individual efforts :CC:Base:Dev:Modulization:Manager:
-     A well designed manager to assembly and build external contribution into the system. A contribution should be
-     wrapped into a *module*.
-**** A common way to contribute a module :CC:Base:Dev:Modulization:Interfaces:
-     The devs, external individuals are trying to contribute a valuable efforts to the system. The job needs to be
-     done in a common way. Our own customization and parameterization should also be done in such way. So that we
-     will enable different forces to work on different kind of task, and tested in the development QEMU. If some
-     task requires to be tested in a real environment, it could be done after the integration.
-** To run in a physical machine                            :CC:Base:Physical:
-   We will need the ISO image and burn it to a DVD or USB stick for installation on a Intel or AMD machine.
+Per package (apt) refining is possible with the our own specific package source host.
+** TODO [/] Creating ISO image for distribution
+We're going to use [[DebianInstaller][DebianInstaller]] to avoid too much extra workload.
+*** TODO Setup Installer
+We should pull in the [[DebianInstaller][DebianInstaller]], customization might happen base on our needs.
+*** TODO Making ISO image
+This is building the [[https://wiki.debian.org/image][binary image]]. We're going to derive the tool from Debian.
+** TODO [0/1] Methods to work on the rootfs (development purpose) :CC:Base:Dev:
+We're going to use QEMU to quickly work on the base. This will give others (devs or someone from the community)
+an easy way to get involved. We also need a managed way to assembly a good result from the efforts of the
+community.
+*** Very common packages                         :CC:Base:Dev:Initialization:
+Some packages might be widely used by other packages or in real life. These packages could be installed before
+futher installation. The list of such packages can grow in the future development and needs. Hopefully the
+base could fit the needs.
+*** TODO [0/2] A method to wrap external efforts   :CC:Base:Dev:Modulization:
+An external effort could be contributed by anyone from the community. We need to assembly these individual
+contribution. This is involving the <<post-installation>> script to make Community Cube base system ready.
+**** TODO A <<module manager>> to assembly individual efforts :CC:Base:Dev:Modulization:Manager:
+A well designed manager to assembly and build external contribution into the system. A contribution should be
+wrapped into a *module*.
+**** TODO [0/1] A common way to contribute an effort :CC:Base:Dev:Modulization:Interfaces:
+The devs, external individuals are trying to contribute a valuable efforts to the system. The job needs to be
+done in a common way. Our own customization and parameterization should also be done in such way. So that we
+will enable different forces to work on different kind of task, and tested in the development QEMU. If some
+task requires to be tested in a real environment, it could be done after the integration. All these stuffs
+are considered by a <<module>>. A *module* could be made to bring up *iptables*, *squid*, etc.
+***** TODO A module sample
+A sample to demonstrate how it's made and develop it in the QEMU.
+** [0/1] To run in a physical machine                      :CC:Base:Physical:
+We will need the ISO image and burn it to a DVD or USB stick for installation on a Intel or AMD machine.
+*** TODO Instructions for making a bootable DVD or USB stick
+This should be quite easy, existing tools are out there. Just need to demonstrate how to do it for end users.
+** [/] Pended discussion raised in the group
+Deciding how much are going to customize it. Actually we should put all package installation to the
+[[install-community-cube-system][module installation]].
+*** [ ] systemd
+*** [ ] init.d
+*** [ ] packages 
+*** ...
+* TODO [0/2] Extending the base to Community Cube system
+# <<install-community-cube-system>>
+This is basically working the [[module manager]]. A the modules are designed bring up a part of the Community Cube
+system. A module has a *install* script, which will be executed during the installation of the Community Cube
+system. We need to define modules to perform tasks for the features.
+** TODO System
 
+** TODO [0/3] Web Service
+*** TODO Nginx (or Apache?)
+*** TODO Web apps
+This is actually defined by the business modle.
+*** TODO OwnCloud
+** Do we need a GUI or CPanel?
+This is our <<user interface>> concern. Here, a GUI means setting up a *Window System*, say X. And a CPanel
+is a web interface towards a Community Cube box (a maching running our system).
+
+What should we choose? It's decided by the end use case. A ComCube is basically running remotely, might not be
+touch physically by a human, so a CPanel should be prefered.
+*** Security
+Enabling a CPanel should put extra security concern because it's remotely controled. 
+*** System workloads for windowing
+Enabling a *GUI*, say the *Window System*, is putting system workloads.
 * Customization and Parameterization over the base
-  This part will be ignored for now. This could be done by modules and the module manager.
-
+This part will be ignored for now. This could be done by modules with the [[module manager]].
+** GUI or CPanel
+Refer to the [[user interface]] concern.
 * Creating an installer for the prepared distribution
 ** Installer same as [[DebianInstaller]]
+(to be expended...)
 ** Making ISO image with the Installer
+Refer to "[[Creating ISO image for distribution]]". (to be expended...)
+
