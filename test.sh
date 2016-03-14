@@ -1,10 +1,15 @@
 #!/bin/bash
 
+$PROCESSOR     # Processor type
+$HARDWARE      # Hardware type 
+
+
 # ----------------------------------------------
 # get_platform
 # ----------------------------------------------
 get_platform () 
 {
+        echo "Detecting platform ..."
 	FILE=/etc/issue
 	if cat $FILE | grep "Ubuntu 12.04" > /dev/null; then
 		PLATFORM="U12"
@@ -27,7 +32,7 @@ get_platform ()
 check_internet () 
 {
 	echo "Checking Internet access ..."
-	if ping -c1 www.communitycube.net >/dev/null 2>/dev/null; then
+	if ! ping -c1 8.8.8.8 >/dev/null 2>/dev/null; then
 		echo "You need internet to proceed. Exiting"
 		exit 1
 	fi
@@ -38,7 +43,7 @@ check_internet ()
 # ----------------------------------------------
 check_root ()
 {
-	echo "Checking User root ..."
+	echo "Checking user root ..."
 	if [ "$(whoami)" != "root" ]; then
 		echo "You need to be root to proceed. Exiting"
 		exit 2
@@ -177,15 +182,71 @@ configure_dhcp ()
 }
 
 # ----------------------------------------------
+# This function checks hardware (ARM or INTEL)
+# ----------------------------------------------
+get_hardware()
+{
+        echo "Detecting hardware ..."
+      
+        
+	if grep ARM /proc/cpuinfo > /dev/null 2>&1; then     # Checking CPU for ARM
+           PROCESSOR="ARM"	                             # Processor type
+           HARDWARE=`cat /proc/cpuinfo | grep Hardware`      # Hardware type
+        elif grep Intel /proc/cpuinfo > /dev/null 2>&1; then # Checking CPU for Intel
+           PROCESSOR="Intel"	                             # Processor type
+           HARDWARE=`dmidecode -s system-product-name`       # Hardware typr
+	fi
+
+        # Printing Processor and Hardware types     
+
+	echo "Processor: $PROCESSOR"
+        echo "Hardware: $HARDWARE"
+}
+
+# ----------------------------------------------
+# This script checks requiremeNts for Physical Machines
+# ----------------------------------------------
+check_requirements()
+{
+	echo "Checking requirements ..."
+	NET_INTERFACES=`ls /sys/class/net/ | grep -w 'eth0\|eth1\|wlan0\|wlan1' | wc -l`
+        MEMORY=`grep MemTotal /proc/meminfo | awk '{print $2}'`
+	STORAGE=`df -h / | grep -w "/" | awk '{print $4}' | sed 's/[^0-9]*//g'`
+        if [ $NET_INTERFACES -le 1 ]; then
+        	echo "You need at least 2 network interfaces. Exiting"
+		exit 4
+        fi
+        if [ $MEMORY -le 900000 ]; then 
+		echo "You need at least 1GB of RAM. Exiting"
+                exit 5
+        fi
+        if [ $STORAGE -le 16 ]; then 
+		echo "You need at least 16GB of free space. Exiting"
+		exit 6
+        fi
+}
+
+# ----------------------------------------------
 # MAIN 
 # ----------------------------------------------
 
-get_platform
-check_internet
-check_root
-install_packages
-configure_network
-configure_dhcp
+check_root    # Checking user 
+get_platform  # Getting platform info
+get_hardware  # Getting hardware info
+
+
+if [ "$PROCESSOR" = "Intel" ]; then 
+	check_requirements  # Checking requirements for Physical or Virtual machine
+        #ged dhcp           # Get DHCP on any detected Ethernet interface
+        check_internet      # Checking Internet connection
+fi
+
+
+
+#check_internet
+#install_packages
+#configure_network
+#configure_dhcp
 
 
 
