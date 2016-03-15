@@ -102,18 +102,17 @@ This script it's intented to transform a Debian Wheezy base installation to a Co
 
 Then your computers and devices should be connected to DHCP network served in eth1/wlan1, and avoid direct contact to internet. This way your devices and your digital life will be protected.
 
-Internal net (eth1/wlan1) - CageOS - internet (eth0/wlan09)
+Internal net (eth1/wlan1) - CageOS - internet (eth0/wlan0)
  
 Execution order it's:
 
-1- autoscript-system
-It prepares whole system, APT repos, network, hostapd (for wlan1), DHCP server for br1, TOR as dns resolver, macchanger on each reboot, ntpdate 
+1- test.sh (Initialization script)
+It aims to check your platform, hardware, system requirements, enable DHCP client on predefined network interface, reach Internet, add repositories, download and install all necessary packages. 
 
-2- autoscript-services
-It prepares running services: yacy, friendica, owncloud, tahoe, i2p, tor hidden services, nginx access
+>You can find Initialization workflow [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=initialization_workflow)
 
-3- autoscript-network
-It prepares CommunityCube as a proxy to browse transparently darknets, filter content (squid), route petitions (iptables), dns resolution (unbound), proxifier (privoxy), blocking advertisment (iptables), redirection known domains to local domains (ex: google.com -> internal yacy)
+2- app-installation-script.sh (Configuration script)
+It aims to configure all the packages and services.
 
 ## License
 >You can check out the full license [here](https://github.com/CommunityCube/debian-autoscript/blob/master/LICENSE)
