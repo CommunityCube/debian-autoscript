@@ -5,7 +5,14 @@ $HARDWARE      # Hardware type
 
 
 # ----------------------------------------------
-# get_platform
+# This function detects platform.
+#
+# Suitable platform are:
+#
+#  * Ubuntu 12.04
+#  * Ubuntu 14.04
+#  * Debian GNU/Linux 7
+#  * Debian GNU/Linux 8  
 # ----------------------------------------------
 get_platform () 
 {
@@ -75,29 +82,29 @@ configure_repositories ()
 		exit
 	fi
 }
-
 # ----------------------------------------------
-# install_packages
+# This script installs bridge-utils package and
+# configures bridge interfaces.
+#
+# br0 = eth0 and wlan0 
+# br1 = eth1 and wlan1
 # ----------------------------------------------
-install_packages () 
+configure_bridge()
 {
-	echo "Updating repositories packages ... "
-	apt-get update 2>&1 > /tmp/apt-get-update.log
-	echo "Installing packages ... "
-	apt-get install -y isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor unbound 2>&1 > /tmp/apt-get-install.log
-	if [ $? -ne 0 ]; then
-		echo "ERROR: unable to install packages"
-		exit 3
-	fi
-}
+	# Updating and installing bridge-utils package
+	echo "Updating repositories ..."
+        apt-get update 2>&1 > /tmp/apt-get-update-bridge.log
+ 	echo "Installing bridge-utils ..."
+	apt-get install bridge-utils 2>&1 > /tmp/apt-get-install-bridge.log
 
-# ----------------------------------------------
-# configure_network
-# ----------------------------------------------
-configure_network () 
-{
-	echo "Configuring networking ... "
-	# Interfaces 
+	# Checking if bridge-utils is installed successfully
+        if [ $? -ne 0 ]; then
+		echo "Error: Unable to install bridge-utils"
+		exit 8
+	else
+
+        # Configuring bridge interfaces
+	echo "Configuring bridge interfaces..."
 	echo "# interfaces(5) file used by ifup(8) and ifdown(8) " > /etc/network/interfaces
 	echo "auto lo" >> /etc/network/interfaces
 	echo "iface lo inet loopback" >> /etc/network/interfaces
@@ -133,53 +140,26 @@ configure_network ()
 	echo "    address 10.0.0.1" >> /etc/network/interfaces
 	echo "    netmask 255.255.255.0" >> /etc/network/interfaces
 	echo "    network 10.0.0.0" >> /etc/network/interfaces
-	# Services 
-	echo "# Yacy" >> /etc/network/interfaces
-	echo "auto eth1:1" >> /etc/network/interfaces
-	echo "allow-hotplug eth1:1" >> /etc/network/interfaces
-	echo "iface eth1:1 inet static" >> /etc/network/interfaces
-	echo "    address 10.0.0.251" >> /etc/network/interfaces
-	echo "    netmask 255.255.255.0" >> /etc/network/interfaces    
-	echo "# Friendica" >> /etc/network/interfaces
-	echo "auto eth1:2" >> /etc/network/interfaces
-	echo "allow-hotplug eth1:2" >> /etc/network/interfaces
-	echo "iface eth1:2 inet static" >> /etc/network/interfaces
-	echo "    address 10.0.0.252" >> /etc/network/interfaces
-	echo "    netmask 255.255.255.0" >> /etc/network/interfaces    
-	echo "# OwnCloud" >> /etc/network/interfaces
-	echo "auto eth1:3" >> /etc/network/interfaces
-	echo "allow-hotplug eth1:3" >> /etc/network/interfaces
-	echo "iface eth1:3 inet static" >> /etc/network/interfaces
-	echo "    address 10.0.0.253" >> /etc/network/interfaces
-	echo "    netmask 255.255.255.0" >> /etc/network/interfaces    
-	echo "# Mailpile" >> /etc/network/interfaces
-	echo "auto eth1:4" >> /etc/network/interfaces
-	echo "allow-hotplug eth1:4" >> /etc/network/interfaces
-	echo "iface eth1:4 inet static" >> /etc/network/interfaces
-	echo "    address 10.0.0.254" >> /etc/network/interfaces
-	echo "    netmask 255.255.255.0" >> /etc/network/interfaces
+	fi
+
 }
 
+
 # ----------------------------------------------
-# configure_dhcp
+# install_packages
 # ----------------------------------------------
-configure_dhcp () 
+install_packages () 
 {
-	echo "Configuring DHCP service "
-	sed "s~INTERFACES=.*~INTERFACES=\"br1\"~g" -i  /etc/default/isc-dhcp-server
-	echo "ddns-update-style interim;" > /etc/dhcp/dhcpd.conf 
-	echo "ignore client-updates;" >> /etc/dhcp/dhcpd.conf 
-	echo "subnet 10.0.0.0 netmask 255.255.255.0 {" >> /etc/dhcp/dhcpd.conf
-	echo "        option routers                  10.0.0.1;" >> /etc/dhcp/dhcpd.conf
-	echo "        option subnet-mask              255.255.255.0;" >> /etc/dhcp/dhcpd.conf
-	echo "        option domain-name              \"communitycube.local\";" >> /etc/dhcp/dhcpd.conf
-	echo "        option domain-name-servers      10.0.0.1;" >> /etc/dhcp/dhcpd.conf
-	echo "		  range dynamic-bootp 10.0.0.100 10.0.0.254;" >> /etc/dhcp/dhcpd.conf
-	echo "    	  default-lease-time 21600;" >> /etc/dhcp/dhcpd.conf
-    echo "        max-lease-time 43200;" >> /etc/dhcp/dhcpd.conf
-	echo "}" >> /etc/dhcp/dhcpd.conf
-	service isc-dhcp-server restart
+	echo "Updating repositories packages ... "
+	apt-get update 2>&1 > /tmp/apt-get-update.log
+	echo "Installing packages ... "
+	apt-get install -y isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor unbound 2>&1 > /tmp/apt-get-install.log
+	if [ $? -ne 0 ]; then
+		echo "ERROR: unable to install packages"
+		exit 3
+	fi
 }
+
 
 # ----------------------------------------------
 # This function checks hardware (ARM or INTEL)
@@ -204,22 +184,42 @@ get_hardware()
 }
 
 # ----------------------------------------------
-# This script checks requiremeNts for Physical Machines
+# This script checks requirements for Physical 
+# Machines.
+# 
+#  Minimum requirements are:
+#
+#  * 2 Network Interfaces.
+#  * 1 GB Physical Memory (RAM).
+#  * 16 GB Free Space On Hard Drive.
+#
 # ----------------------------------------------
 check_requirements()
 {
 	echo "Checking requirements ..."
+
+        # This variable contains network interfaces quantity.  
 	NET_INTERFACES=`ls /sys/class/net/ | grep -w 'eth0\|eth1\|wlan0\|wlan1' | wc -l`
+
+        # This variable contains total physical memory size.
         MEMORY=`grep MemTotal /proc/meminfo | awk '{print $2}'`
+	
+	# This variable contains total free space on root partition.
 	STORAGE=`df -h / | grep -w "/" | awk '{print $4}' | sed 's/[^0-9]*//g'`
-        if [ $NET_INTERFACES -le 1 ]; then
+        
+        # Checking network interfaces quantity.
+	if [ $NET_INTERFACES -le 1 ]; then
         	echo "You need at least 2 network interfaces. Exiting"
-		exit 4
+		exit 4 
         fi
+	
+	# Checking physical memory size.
         if [ $MEMORY -le 900000 ]; then 
 		echo "You need at least 1GB of RAM. Exiting"
                 exit 5
         fi
+
+	# Checking free space. 
         if [ $STORAGE -le 16 ]; then 
 		echo "You need at least 16GB of free space. Exiting"
 		exit 6
@@ -227,7 +227,79 @@ check_requirements()
 }
 
 # ----------------------------------------------
+# This function enables DHCP client and checks 
+# for Internet on predefined network interface.
+#
+# Steps to define interface are:
+#
+# 1. Checking for DHCP server and Internet in  
+# *  network connected to eth0.
+# *
+# ***** If success.
+# *   *
+# *   * 2. Enable DHCP client on eth0 and   
+# *        default route to eth0
+# *
+# ***** If no success. 
+#     * 
+#     * 2. Checking for DHCP server and Internet 
+#       *  in network connected to eth1
+#       *
+#       ***** If success.
+#       *   * 
+#       *   * 3. Enable DHCP client on eth1.
+#       *
+#       *
+#       ***** If no success.
+#           *
+#           * 3. Warn user and exit with error.
+#
+# ----------------------------------------------
+get_dhcp_and_Internet()
+{
+        echo "Getting Internet access on eth0"
+       
+        # Configuring eth0 to get ip dynamically
+	echo "# interfaces(5) file used by ifup(8) and ifdown(8) " > /etc/network/interfaces
+	echo -e "auto lo\niface lo inet loopback\n" >> /etc/network/interfaces
+	echo -e  "auto eth0\niface eth0 inet dhcp" >> /etc/network/interfaces
+	/etc/init.d/networking restart 
+
+        # Checking Internet access on eth0
+        if check_internet; then 
+		echo "Internet conection established on: eth0"	
+	else
+		echo "Warning: Unable to get Internet access on eth0"
+	        
+        	echo "Getting Internet access on eth1"
+         
+        	# Configuring eth1 to get ip dynamically
+	        echo "# interfaces(5) file used by ifup(8) and ifdown(8) " > /etc/network/interfaces
+		echo -e "auto lo\niface lo inet loopback\n" >> /etc/network/interfaces
+		echo -e "auto eth1\niface eth0 inet dhcp" >> /etc/network/interfaces
+		/etc/init.d/networking restart 
+ 	        
+        	# Checking Internet access on eth1
+        	if check_internet; then 
+			echo "Internet conection established on: eth1"	
+		else
+			echo "Warning: Unable to get Internet access on eth1"
+			echo "Please plugin Internet cable to eth0 or eth1 and enable DHCP on gateway"
+			echo "Error: Unable to get Internet access. Exiting"
+			exit 7
+		fi
+	fi
+}
+
+
+# ----------------------------------------------
 # MAIN 
+# ----------------------------------------------
+# This is the main function if this script.
+# It uses functions defined above to check user,
+# Platform, Hardware, System requirements and 
+# Internet connection. Then it downloads
+# installs all neccessary packages.
 # ----------------------------------------------
 
 check_root    # Checking user 
@@ -236,9 +308,10 @@ get_hardware  # Getting hardware info
 
 
 if [ "$PROCESSOR" = "Intel" ]; then 
-	check_requirements  # Checking requirements for Physical or Virtual machine
-        #ged dhcp           # Get DHCP on any detected Ethernet interface
-        check_internet      # Checking Internet connection
+	check_requirements      # Checking requirements for Physical or Virtual machine
+        get_dhcp_and_Internet  	# Get DHCP on eth0 or eth1 and connect to Internet
+	configure_repositories	# Prepare and update repositories
+	install_packages       	# Download and install packages	
 fi
 
 
