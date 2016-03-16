@@ -109,9 +109,9 @@ There are 2 ways to join to CommunityCube network
 
 Your Physical/Virtual machine need to meet the minimum requirements:
 
-	1. 2 network interface
-	2. 1 GB of Physical memory
-	3. 16 GB of free space
+1. 2 network interface
+2. 1 GB of Physical memory
+3. 16 GB of free space
 
 If your machine is ok with requirement, then you can process to next step.
 
