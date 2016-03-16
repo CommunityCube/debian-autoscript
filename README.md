@@ -100,8 +100,8 @@ More information [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=techni
 <!-- this part needs to be refactored by someone that does know the current state of building process -->
 There are 2 ways to join to CommunityCube network
 
-**1. Setup CommunityCube software on Physical/Virtual machine.**
-**2. Setup CommunityCube software on Odroid XU3/XU4/C1+/C2.**
+##### 1. Setup CommunityCube software on Physical/Virtual machine.
+##### 2. Setup CommunityCube software on Odroid XU3/XU4/C1+/C2.
 
 #### Steps to setup on Physical/Virtual machine.
 
