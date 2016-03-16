@@ -100,12 +100,12 @@ More information [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=techni
 <!-- this part needs to be refactored by someone that does know the current state of building process -->
 There are 2 ways to join to CommunityCube network
 
-### 1. Setup CommunityCube software on Physical/Virtual machine.
-### 2. Setup CommunityCube software on Odroid XU3/XU4/C1+/C2
+#### 1. Setup CommunityCube software on Physical/Virtual machine.
+#### 2. Setup CommunityCube software on Odroid XU3/XU4/C1+/C2
 
-## Steps to setup on Physical/Virtual machine.
+### Steps to setup on Physical/Virtual machine.
 
-### Step 1: Checking requirements
+#### Step 1: Checking requirements
 
 Your Physical/Virtual machine need to meet the minimum requirements:
 
@@ -115,15 +115,15 @@ Your Physical/Virtual machine need to meet the minimum requirements:
 
 If your machine is ok with requirement, then you can process to next step.
 
-### Step 2: Setup the network.
+#### Step 2: Setup the network.
 
 In this step you need to connect one interface of your machine to Internet, and other one to local network device.
 
-### Step 3. Executing scripts.
+#### Step 3. Executing scripts.
 
 In this step you need to download and execute the following scripts on your machine with given order.
 
-### 1. test.sh (Initialization script)
+#### 1. test.sh (Initialization script)
 
 Script workflow
 
@@ -153,24 +153,24 @@ Install necessary packages
 
 >You can find Initialization workflow [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=initialization_workflow)
 
-### 2. app-installation-script.sh (Configuration script)
+#### 2. app-installation-script.sh (Configuration script)
 
 It aims to configure all the packages and services.
 
 
-## Steps to setup on Odroid board.
+### Steps to setup on Odroid board.
 
-### Step 1. Get an odroid and assemble it.
+#### Step 1. Get an odroid and assemble it.
 
 There are several seperate modules that need to be connected to odroid board.
 
 You can find more information about necessary modules [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=technical:hardware:communitycube_-_odroid_xu3_lite).
 
-### Step 2. Executing scripts.
+#### Step 2. Executing scripts.
 
 In this step you need to download and execute the following scripts on your machine with given order.
 
-### 1. test.sh (Initialization script)
+#### 1. test.sh (Initialization script)
 
 Script workflow
 
@@ -205,10 +205,9 @@ Download necessary packages
 Install necessary packages
 
 
-
 >You can find Initialization workflow [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=initialization_workflow)
 
-### 2. app-installation-script.sh (Configuration script)
+#### 2. app-installation-script.sh (Configuration script)
 
 It aims to configure all the packages and services.
 
