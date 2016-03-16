@@ -98,21 +98,105 @@ More information [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=techni
 
 ## Setup
 <!-- this part needs to be refactored by someone that does know the current state of building process -->
-This script it's intented to transform a Debian Wheezy base installation to a CommunityCube System.
+There are 2 ways to join to CommunityCube network
 
-Then your computers and devices should be connected to DHCP network served in eth1/wlan1, and avoid direct contact to internet. This way your devices and your digital life will be protected.
+# 1. Setup CommunityCube software on Physical/Virtual machine.
+# 2. Setup CommunityCube software on Odroid XU3/XU4/C1+/C2
 
-Internal net (eth1/wlan1) - CageOS - internet (eth0/wlan0)
- 
-Execution order it's:
+Here are the steps to setup on Physical/Virtual machine.
 
-1- test.sh (Initialization script)
-It aims to check your platform, hardware, system requirements, enable DHCP client on predefined network interface, reach Internet, add repositories, download and install all necessary packages. 
+# Step 1: Checking requirements
+
+Your Physical/Virtual machine need to meet the minimum requirements:
+
+	1. 2 network interface
+	2. 1 GB of Physical memory
+	3. 16 GB of free space
+
+If your machine is ok with requirement, then you can process to next step.
+
+# Step 2: Setup the network.
+
+In this step you need to connect one interface of your machine to Internet, and other one to local network device.
+
+# Step 3. Executing scripts.
+
+In this step you need to download and execute the following scripts on your machine with given order.
+
+1. test.sh (Initialization script)
+
+	Script workflow
+
+	1. Check User 
+		You need to run script as root user
+	2. Check Platform 
+		Platform should be Debian 7/8, Ubuntu 12.04/14.04
+	3. Check Hardware 
+		If you are running this script on odroid it should detect Intel processor
+	4. Check Requirements 
+		Machine should match the requirements mentioned above
+	5. Check Internet
+		Check Internet connection.
+	6. Prepare perositories
+		Update repositories for necessary packages
+	7. Download packages
+		Download necessary packages
+	8. Install packages
+		Install necessary packages
 
 >You can find Initialization workflow [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=initialization_workflow)
 
-2- app-installation-script.sh (Configuration script)
+2. app-installation-script.sh (Configuration script)
+
+	It aims to configure all the packages and services.
+
+
+Here are the steps to setup on Odroid board.
+
+# Step 1. Get an odroid and assemble it.
+
+There are several seperate modules that need to be connected to odroid board.
+
+You can find more information about necessary modules [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=technical:hardware:communitycube_-_odroid_xu3_lite).
+
+# Step 2. Executing scripts.
+
+In this step you need to download and execute the following scripts on your machine with given order.
+
+1. test.sh (Initialization script)
+
+	Script workflow
+
+	1. Check User 
+		You need to run script as root user
+	2. Check Platform 
+		Platform should be Debian 7/8, Ubuntu 12.04/14.04
+	3. Check Hardware 
+		If you are running this script on odroid it should detect ARM processor
+	4. Check If Assembled 
+		All neccessary modules should be connected to odroid board
+	5. Configure Bridge Interfaces 
+		eth0 and wlan0 will be bridged into interface br0
+		eth1 and wlan1 will be bridged into interface br1
+		In ethernet network, br0 should be connected to Internet and br0 to local network
+		In wireless network, bridge interdace with wore powerful wlan will be connected to Internet and other one to local network   	
+	6. Check Internet
+		Check Internet connection.
+	7. Prepare perositories
+		Apdate repositories for necessary packages
+	8. Download packages
+		Download necessary packages
+	9. Install packages
+		Install necessary packages
+
+
+
+>You can find Initialization workflow [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=initialization_workflow)
+
+2. app-installation-script.sh (Configuration script)
+
 It aims to configure all the packages and services.
+
 
 ## License
 >You can check out the full license [here](https://github.com/CommunityCube/debian-autoscript/blob/master/LICENSE)
