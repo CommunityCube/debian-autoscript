@@ -123,39 +123,39 @@ In this step you need to connect one interface of your machine to Internet, and 
 
 In this step you need to download and execute the following scripts on your machine with given order.
 
-### test.sh (Initialization script)
+### 1. test.sh (Initialization script)
 
-	Script workflow
+Script workflow
 
 1. Check User 
-	You need to run script as root user
+You need to run script as root user
 
 2. Check Platform 
-	Platform should be Debian 7/8, Ubuntu 12.04/14.04
+Platform should be Debian 7/8, Ubuntu 12.04/14.04
 
 3. Check Hardware 
-	If you are running this script on odroid it should detect Intel processor
+If you are running this script on odroid it should detect Intel processor
 
 4. Check Requirements 
-	Machine should match the requirements mentioned above
+Machine should match the requirements mentioned above
 
 5. Check Internet
-	Check Internet connection.
+Check Internet connection.
 
 6. Prepare perositories
-	Update repositories for necessary packages
+Update repositories for necessary packages
 
 7. Download packages
-	Download necessary packages
+Download necessary packages
 
 8. Install packages
-	Install necessary packages
+Install necessary packages
 
 >You can find Initialization workflow [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=initialization_workflow)
 
-2. app-installation-script.sh (Configuration script)
+### 2. app-installation-script.sh (Configuration script)
 
-	It aims to configure all the packages and services.
+It aims to configure all the packages and services.
 
 
 ## Steps to setup on Odroid board.
@@ -170,45 +170,45 @@ You can find more information about necessary modules [here](https://213.129.164
 
 In this step you need to download and execute the following scripts on your machine with given order.
 
-### 1 test.sh (Initialization script)
+### 1. test.sh (Initialization script)
 
-	Script workflow
+Script workflow
 
-1 Check User 
-	You need to run script as root user
+1. Check User 
+You need to run script as root user
 
-2 Check Platform 
-	Platform should be Debian 7/8, Ubuntu 12.04/14.04
+2. Check Platform 
+Platform should be Debian 7/8, Ubuntu 12.04/14.04
 
-3 Check Hardware 
- 	If you are running this script on odroid it should detect ARM processor
+3. Check Hardware 
+If you are running this script on odroid it should detect ARM processor
 
-4 Check If Assembled 
-	All neccessary modules should be connected to odroid board
+4. Check If Assembled 
+All neccessary modules should be connected to odroid board
 
-5 Configure Bridge Interfaces 
-	eth0 and wlan0 will be bridged into interface br0
-	eth1 and wlan1 will be bridged into interface br1
-	In ethernet network, br0 should be connected to Internet and br0 to local network
-	In wireless network, bridge interdace with wore powerful wlan will be connected to Internet and other one to local network
+5. Configure Bridge Interfaces 
+eth0 and wlan0 will be bridged into interface br0
+eth1 and wlan1 will be bridged into interface br1
+In ethernet network, br0 should be connected to Internet and br0 to local network
+In wireless network, bridge interdace with wore powerful wlan will be connected to Internet and other one to local network
 
-6 Check Internet
-	Check Internet connection.
+6. Check Internet
+Check Internet connection.
 
-7 Prepare perositories
-	Apdate repositories for necessary packages
+7. Prepare perositories
+Apdate repositories for necessary packages
 
-8 Download packages
-	Download necessary packages
+8. Download packages
+Download necessary packages
 
-9 Install packages
-	Install necessary packages
+9. Install packages
+Install necessary packages
 
 
 
 >You can find Initialization workflow [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=initialization_workflow)
 
-### 2 app-installation-script.sh (Configuration script)
+### 2. app-installation-script.sh (Configuration script)
 
 It aims to configure all the packages and services.
 
