@@ -100,12 +100,12 @@ More information [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=techni
 <!-- this part needs to be refactored by someone that does know the current state of building process -->
 There are 2 ways to join to CommunityCube network
 
-# 1. Setup CommunityCube software on Physical/Virtual machine.
-# 2. Setup CommunityCube software on Odroid XU3/XU4/C1+/C2
+### 1. Setup CommunityCube software on Physical/Virtual machine.
+### 2. Setup CommunityCube software on Odroid XU3/XU4/C1+/C2
 
-Here are the steps to setup on Physical/Virtual machine.
+## Steps to setup on Physical/Virtual machine.
 
-# Step 1: Checking requirements
+### Step 1: Checking requirements
 
 Your Physical/Virtual machine need to meet the minimum requirements:
 
@@ -115,34 +115,41 @@ Your Physical/Virtual machine need to meet the minimum requirements:
 
 If your machine is ok with requirement, then you can process to next step.
 
-# Step 2: Setup the network.
+### Step 2: Setup the network.
 
 In this step you need to connect one interface of your machine to Internet, and other one to local network device.
 
-# Step 3. Executing scripts.
+### Step 3. Executing scripts.
 
 In this step you need to download and execute the following scripts on your machine with given order.
 
-1. test.sh (Initialization script)
+### test.sh (Initialization script)
 
 	Script workflow
 
-	1. Check User 
-		You need to run script as root user
-	2. Check Platform 
-		Platform should be Debian 7/8, Ubuntu 12.04/14.04
-	3. Check Hardware 
-		If you are running this script on odroid it should detect Intel processor
-	4. Check Requirements 
-		Machine should match the requirements mentioned above
-	5. Check Internet
-		Check Internet connection.
-	6. Prepare perositories
-		Update repositories for necessary packages
-	7. Download packages
-		Download necessary packages
-	8. Install packages
-		Install necessary packages
+1. Check User 
+	You need to run script as root user
+
+2. Check Platform 
+	Platform should be Debian 7/8, Ubuntu 12.04/14.04
+
+3. Check Hardware 
+	If you are running this script on odroid it should detect Intel processor
+
+4. Check Requirements 
+	Machine should match the requirements mentioned above
+
+5. Check Internet
+	Check Internet connection.
+
+6. Prepare perositories
+	Update repositories for necessary packages
+
+7. Download packages
+	Download necessary packages
+
+8. Install packages
+	Install necessary packages
 
 >You can find Initialization workflow [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=initialization_workflow)
 
@@ -151,49 +158,57 @@ In this step you need to download and execute the following scripts on your mach
 	It aims to configure all the packages and services.
 
 
-Here are the steps to setup on Odroid board.
+## Steps to setup on Odroid board.
 
-# Step 1. Get an odroid and assemble it.
+### Step 1. Get an odroid and assemble it.
 
 There are several seperate modules that need to be connected to odroid board.
 
 You can find more information about necessary modules [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=technical:hardware:communitycube_-_odroid_xu3_lite).
 
-# Step 2. Executing scripts.
+### Step 2. Executing scripts.
 
 In this step you need to download and execute the following scripts on your machine with given order.
 
-1. test.sh (Initialization script)
+### 1 test.sh (Initialization script)
 
 	Script workflow
 
-	1. Check User 
-		You need to run script as root user
-	2. Check Platform 
-		Platform should be Debian 7/8, Ubuntu 12.04/14.04
-	3. Check Hardware 
-		If you are running this script on odroid it should detect ARM processor
-	4. Check If Assembled 
-		All neccessary modules should be connected to odroid board
-	5. Configure Bridge Interfaces 
-		eth0 and wlan0 will be bridged into interface br0
-		eth1 and wlan1 will be bridged into interface br1
-		In ethernet network, br0 should be connected to Internet and br0 to local network
-		In wireless network, bridge interdace with wore powerful wlan will be connected to Internet and other one to local network   	
-	6. Check Internet
-		Check Internet connection.
-	7. Prepare perositories
-		Apdate repositories for necessary packages
-	8. Download packages
-		Download necessary packages
-	9. Install packages
-		Install necessary packages
+1 Check User 
+	You need to run script as root user
+
+2 Check Platform 
+	Platform should be Debian 7/8, Ubuntu 12.04/14.04
+
+3 Check Hardware 
+ 	If you are running this script on odroid it should detect ARM processor
+
+4 Check If Assembled 
+	All neccessary modules should be connected to odroid board
+
+5 Configure Bridge Interfaces 
+	eth0 and wlan0 will be bridged into interface br0
+	eth1 and wlan1 will be bridged into interface br1
+	In ethernet network, br0 should be connected to Internet and br0 to local network
+	In wireless network, bridge interdace with wore powerful wlan will be connected to Internet and other one to local network
+
+6 Check Internet
+	Check Internet connection.
+
+7 Prepare perositories
+	Apdate repositories for necessary packages
+
+8 Download packages
+	Download necessary packages
+
+9 Install packages
+	Install necessary packages
 
 
 
 >You can find Initialization workflow [here](https://213.129.164.215:4580/dokuwiki/doku.php?id=initialization_workflow)
 
-2. app-installation-script.sh (Configuration script)
+### 2 app-installation-script.sh (Configuration script)
 
 It aims to configure all the packages and services.
 
