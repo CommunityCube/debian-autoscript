@@ -71,12 +71,62 @@ configure_repositories ()
 		echo "deb http://ftp.us.debian.org/debian wheezy main non-free contrib" > etc/apt/sources.list
 		echo "deb http://ftp.debian.org/debian/ wheezy-updates main contrib non-free" >> etc/apt/sources.list
 		echo "deb http://security.debian.org/ wheezy/updates main contrib non-free" >> etc/apt/sources.list
+	
+		# Prepare owncloud repo
+		echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/community/Debian_7.0/ /' > /etc/apt/sources.list.d/owncloud.list
+		wget http://download.opensuse.org/repositories/isv:ownCloud:community/Debian_7.0/Release.key -O- | apt-key add -
+
+		# Prepare owncloud repo
+		echo 'deb http://packages.prosody.im/debian wheezy main' > /etc/apt/sources.list.d/prosody.list
+		wget https://prosody.im/files/prosody-debian-packages.key -O- | apt-key add -
+ 
+		# Prepare tahoe repo
+		echo 'deb https://dl.dropboxusercontent.com/u/18621288/debian wheezy main' > /etc/apt/sources.list.d/tahoei2p.list
+
+		# Prepare yacy repo
+		echo 'deb http://debian.yacy.net ./' > /etc/apt/sources.list.d/yacy.list
+		apt-key advanced --keyserver pgp.net.nz --recv-keys 03D886E7
+
+		# Prepare i2p repo
+		echo 'deb http://deb.i2p2.no/ stable main' > /etc/apt/sources.list.d/i2p.list
+		wget --no-check-certificate https://geti2p.net/_static/i2p-debian-repo.key.asc -O- | apt-key add -
+
+		# Prepare tor repo
+		echo 'deb http://deb.torproject.org/torproject.org wheezy main'  > /etc/apt/sources.list.d/tor.list
+		gpg --keyserver keys.gnupg.net --recv 886DDD89
+		gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | apt-key add -
+
+
 	elif [ $PLATFORM = "D8" ]; then
 		# Avoid macchanger asking for information
 		export DEBIAN_FRONTEND=noninteractive
 		echo "deb http://ftp.es.debian.org/debian/ jessie main" > etc/apt/sources.list
 		echo "deb http://ftp.es.debian.org/debian/ jessie-updates main" >> etc/apt/sources.list
 		echo "deb http://security.debian.org/ jessie/updates main" >> etc/apt/sources.list
+
+		# Prepare owncloud repo
+		echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/community/Debian_7.0/ /' > /etc/apt/sources.list.d/owncloud.list
+		wget http://download.opensuse.org/repositories/isv:ownCloud:community/Debian_7.0/Release.key -O- | apt-key add -
+
+		# Prepare owncloud repo
+		echo 'deb http://packages.prosody.im/debian wheezy main' > /etc/apt/sources.list.d/prosody.list
+		wget https://prosody.im/files/prosody-debian-packages.key -O- | apt-key add -
+ 
+		# Prepare tahoe repo
+		echo 'deb https://dl.dropboxusercontent.com/u/18621288/debian wheezy main' > /etc/apt/sources.list.d/tahoei2p.list
+
+		# Prepare yacy repo
+		echo 'deb http://debian.yacy.net ./' > /etc/apt/sources.list.d/yacy.list
+		apt-key advanced --keyserver pgp.net.nz --recv-keys 03D886E7
+
+		# Prepare i2p repo
+		echo 'deb http://deb.i2p2.no/ stable main' > /etc/apt/sources.list.d/i2p.list
+		wget --no-check-certificate https://geti2p.net/_static/i2p-debian-repo.key.asc -O- | apt-key add -
+
+		# Prepare tor repo
+		echo 'deb http://deb.torproject.org/torproject.org wheezy main'  > /etc/apt/sources.list.d/tor.list
+		gpg --keyserver keys.gnupg.net --recv 886DDD89
+		gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | apt-key add -
 	else 
 		echo "ERROR: UNKNOWN PLATFORM" 
 		exit
@@ -153,7 +203,7 @@ install_packages ()
 	echo "Updating repositories packages ... "
 	apt-get update 2>&1 > /tmp/apt-get-update.log
 	echo "Installing packages ... "
-	apt-get install -y isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor unbound 2>&1 > /tmp/apt-get-install.log
+	apt-get install -y privoxy squid3 nginx php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear i2p unbound owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apache2.2-common- openjdk-7-jre-headless yacy i2p-tahoe-lafs phpmyadmin php5 mysql-server php5-gd php5-imap smarty3 git onbound ntpdate macchanger bridge-utils hostapd isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils apt-transport-https unzip debian-keyring uboot-mkimage console-tools subversion build-essential libncurses5-dev i2p-keyring deb.torproject.org-keyring killyourtv-keyring hostapd 2>&1 > /tmp/apt-get-install.log
 	if [ $? -ne 0 ]; then
 		echo "ERROR: unable to install packages"
 		exit 3
@@ -341,7 +391,7 @@ check_assemblance()
 	elif ! ls /sys/class/net/ | grep -w 'wlan0'; then
 		echo "Error: Interface wlan0 is not connected. Exiting"
 		exit 10
-	elif ! ls /sys/slass/net/ | grep -w 'wlan1'; then
+	elif ! ls /sys/class/net/ | grep -w 'wlan1'; then
 		echo "Error: Interface wlan1 is not connected. Exiting"
 		exit 11  
 	fi
@@ -400,10 +450,10 @@ if [ "$PROCESSOR" = "Intel" ]; then
 # ---------------------------------------------
 elif [ "$PROCESSOR" = "ARM" ]; then 
 	check_assemblance
-#	configure_bridges
-#	check_internet
-#	configure_repositories
-#	install_packages
+	configure_bridges
+	check_internet
+	configure_repositories
+	install_packages
 fi
 
 # ---------------------------------------------
@@ -459,61 +509,6 @@ echo "Initialization done successfully"
 #EOF
 
 
-# Prepare owncloud repo
-# echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/community/Debian_7.0/ /' > /etc/apt/sources.list.d/owncloud.list
-# wget http://download.opensuse.org/repositories/isv:ownCloud:community/Debian_7.0/Release.key -O- | apt-key add -
-
-# Prepare owncloud repo
-# echo 'deb http://packages.prosody.im/debian wheezy main' > /etc/apt/sources.list.d/prosody.list
-# wget https://prosody.im/files/prosody-debian-packages.key -O- | apt-key add -
- 
-# Prepare tahoe repo
-# echo 'deb https://dl.dropboxusercontent.com/u/18621288/debian wheezy main' > /etc/apt/sources.list.d/tahoei2p.list
-
-# Prepare yacy repo
-# echo 'deb http://debian.yacy.net ./' > /etc/apt/sources.list.d/yacy.list
-# apt-key advanced --keyserver pgp.net.nz --recv-keys 03D886E7
-
-# Prepare i2p repo
-# echo 'deb http://deb.i2p2.no/ stable main' > /etc/apt/sources.list.d/i2p.list
-# wget --no-check-certificate https://geti2p.net/_static/i2p-debian-repo.key.asc -O- | apt-key add -
-
-# Prepare tor repo
-# echo 'deb http://deb.torproject.org/torproject.org wheezy main'  > /etc/apt/sources.list.d/tor.list
-# gpg --keyserver keys.gnupg.net --recv 886DDD89
-# gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | apt-key add -
-
-# Install packages
-## apt-get update
-# autoscript-system 
-# apt-get install -y i2p-keyring deb.torproject.org-keyring killyourtv-keyring
-# apt-get install -y debian-keyring uboot-mkimage console-tools subversion build-essential git libncurses5-dev 
-# apt-get install -y bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils apt-transport-https unzip
-## apt-get install -y isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor unbound
-# apt-get install -y hostapd
-# apt-get install -y bridge-utils
-# apt-get install -y macchanger
-# apt-get install -y ntpdate
-# apt-get install -y tor
-# apt-get install -y unbound
-
-# autoscript-network
-# apt-get install -y privoxy
-# apt-get install -y squid3
-
-
-# autoscript-services  
-# apt-get install -y nginx
-# apt-get install -y php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear
-# apt-get install -y tor
-# apt-get install -y i2p
-# apt-get install -y unbound
-# apt-get install -y owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apache2.2-common-
-# apt-get install -y openjdk-7-jre-headless
-# apt-get install -y yacy
-# apt-get install -y i2p-tahoe-lafs
-# apt-get install -y phpmyadmin
-# apt-get install -y php5 mysql-server php5-curl php5-gd php5-mysql php5-imap smarty3 git
 
 
 
