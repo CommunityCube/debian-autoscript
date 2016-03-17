@@ -1,8 +1,8 @@
 #!/bin/bash
 
-$PROCESSOR     # Processor type
-$HARDWARE      # Hardware type 
-
+PROCESSOR="Not Detected"     		# Processor type
+HARDWARE="Not Detected"      		# Hardware type 
+EXTERNAL_INTERFACE="Not Detected"	# External Interface (Connected to Internet) 
 
 # ----------------------------------------------
 # This function detects platform.
@@ -162,19 +162,26 @@ install_packages ()
 
 
 # ----------------------------------------------
-# This function checks hardware (ARM or INTEL)
+# This function checks hardware (ARM or INTEL).
+# It gets Processor and Hardware types and saves
+# them in PROCESSOR and HARDWARE variables.
 # ----------------------------------------------
 get_hardware()
 {
         echo "Detecting hardware ..."
       
-        
-	if grep ARM /proc/cpuinfo > /dev/null 2>&1; then     # Checking CPU for ARM
-           PROCESSOR="ARM"	                             # Processor type
-           HARDWARE=`cat /proc/cpuinfo | grep Hardware`      # Hardware type
-        elif grep Intel /proc/cpuinfo > /dev/null 2>&1; then # Checking CPU for Intel
-           PROCESSOR="Intel"	                             # Processor type
-           HARDWARE=`dmidecode -s system-product-name`       # Hardware typr
+        # Checking CPU for ARM and saving
+	# Processor and Hardware types in
+	# PROCESSOR and HARDWARE variables
+	if grep ARM /proc/cpuinfo > /dev/null 2>&1; then    
+           PROCESSOR="ARM"	                           
+           HARDWARE=`cat /proc/cpuinfo | grep Hardware | awk {'print $3'}`   
+        # Checking CPU for Intel and saving
+	# Processor and Hardware types in
+	# PROCESSOR and HARDWARE variables
+	elif grep Intel /proc/cpuinfo > /dev/null 2>&1; then 
+           PROCESSOR="Intel"	                             
+           HARDWARE=`dmidecode -s system-product-name`       
 	fi
 
         # Printing Processor and Hardware types     
@@ -232,87 +239,192 @@ check_requirements()
 #
 # Steps to define interface are:
 #
-# 1. Checking for DHCP server and Internet in  
-# *  network connected to eth0.
+# 1. Checking Internet access. 
 # *
-# ***** If success.
-# *   *
-# *   * 2. Enable DHCP client on eth0 and   
-# *        default route to eth0
+# *
+# ***** If success. 
+# *
+# *     2. Get Interface name 
 # *
 # ***** If no success. 
-#     * 
-#     * 2. Checking for DHCP server and Internet 
-#       *  in network connected to eth1
+#     *
+#     * 2. Checking for DHCP server and Internet in  
+#       *  network connected to eth0.
 #       *
 #       ***** If success.
-#       *   * 
-#       *   * 3. Enable DHCP client on eth1.
+#       *   *
+#       *   * 2. Enable DHCP client on eth0 and   
+#       *        default route to eth0
 #       *
-#       *
-#       ***** If no success.
+#       ***** If no success. 
+#           * 
+#           * 2. Checking for DHCP server and Internet 
+#           *  in network connected to eth1
 #           *
-#           * 3. Warn user and exit with error.
+#           ***** If success.
+#           *   * 
+#           *   * 3. Enable DHCP client on eth1.
+#           *
+#           *
+#           ***** If no success.
+#               *
+#               * 3. Warn user and exit with error.
 #
 # ----------------------------------------------
 get_dhcp_and_Internet()
 {
-        echo "Getting Internet access on eth0"
-       
-        # Configuring eth0 to get ip dynamically
-	echo "# interfaces(5) file used by ifup(8) and ifdown(8) " > /etc/network/interfaces
-	echo -e "auto lo\niface lo inet loopback\n" >> /etc/network/interfaces
-	echo -e  "auto eth0\niface eth0 inet dhcp" >> /etc/network/interfaces
-	/etc/init.d/networking restart 
-
-        # Checking Internet access on eth0
-        if check_internet; then 
-		echo "Internet conection established on: eth0"	
+	# Check internet Connection. If Connection exist then get 
+	# and save Internet side network interface name in 
+	# EXTERNAL_INTERFACE variable
+	if ping -c1 8.8.8.8 >/dev/null 2>/dev/null; then
+		EXTERNAL_INTERFACE=`route -n | awk {'print $1 " " $8'} | grep "0.0.0.0" | awk {'print $2'}`
+		echo "Internet connection established on interface $EXTERNAL_INTERFACE"
 	else
-		echo "Warning: Unable to get Internet access on eth0"
-	        
-        	echo "Getting Internet access on eth1"
-         
-        	# Configuring eth1 to get ip dynamically
-	        echo "# interfaces(5) file used by ifup(8) and ifdown(8) " > /etc/network/interfaces
+		# Checking eth0 for Internet connection
+        	echo "Getting Internet access on eth0"
+		echo "# interfaces(5) file used by ifup(8) and ifdown(8) " > /etc/network/interfaces
 		echo -e "auto lo\niface lo inet loopback\n" >> /etc/network/interfaces
-		echo -e "auto eth1\niface eth0 inet dhcp" >> /etc/network/interfaces
+		echo -e  "auto eth0\niface eth0 inet dhcp" >> /etc/network/interfaces
 		/etc/init.d/networking restart 
- 	        
-        	# Checking Internet access on eth1
-        	if check_internet; then 
-			echo "Internet conection established on: eth1"	
+		if ping -c1 8.8.8.8 >/dev/null 2>/dev/null; then
+			echo "Internet conection established on: eth0"	
+			EXTERNAL_INTERFACE="eth0"
 		else
-			echo "Warning: Unable to get Internet access on eth1"
-			echo "Please plugin Internet cable to eth0 or eth1 and enable DHCP on gateway"
-			echo "Error: Unable to get Internet access. Exiting"
-			exit 7
+			echo "Warning: Unable to get Internet access on eth0"
+        		# Checking eth1 for Internet connection
+			echo "Getting Internet access on eth1"
+	        	echo "# interfaces(5) file used by ifup(8) and ifdown(8) " > /etc/network/interfaces
+			echo -e "auto lo\niface lo inet loopback\n" >> /etc/network/interfaces
+			echo -e "auto eth1\niface eth1 inet dhcp" >> /etc/network/interfaces
+			/etc/init.d/networking restart 
+			if ping -c1 8.8.8.8 >/dev/null 2>/dev/null; then
+				echo "Internet conection established on: eth1"	
+				EXTERNAL_INTERFACE="eth1"
+			else
+				echo "Warning: Unable to get Internet access on eth1"
+				echo "Please plugin Internet cable to eth0 or eth1 and enable DHCP on gateway"
+				echo "Error: Unable to get Internet access. Exiting"
+				exit 7
+			fi
 		fi
 	fi
 }
 
+# ----------------------------------------------
+# This scripts check odroid board to find out if
+# it assembled or not.
+# There are list of additional modules that need
+# to be connected to board.
+# Additional modules are.
+# 	1. ssd 8gbc10
+#	2. HDD 2TB
+#	3. 2xWlan interfaces
+#	4. TFT screen
+# ----------------------------------------------
+check_assemblance()
+{
+	echo "Checking assemblance ..."
+	
+	echo "Checking network interfaces ..."  
+	# Script should detect 4 network 
+	# interfaces.
+	# 1. eth0
+	# 2. eth1
+	# 3. wlan0
+	# 4. wlan1
+	if   ! ls /sys/class/net/ | grep -w 'eth0'; then
+		echo "Error: Interface eth0 is not connected. Exiting"
+		exit 8
+	elif ! ls /sys/class/net/ | grep -w 'eth1'; then
+		echo "Error: Interface eth1 is not connected. Exiting"
+		exit 9
+	elif ! ls /sys/class/net/ | grep -w 'wlan0'; then
+		echo "Error: Interface wlan0 is not connected. Exiting"
+		exit 10
+	elif ! ls /sys/slass/net/ | grep -w 'wlan1'; then
+		echo "Error: Interface wlan1 is not connected. Exiting"
+		exit 11  
+	fi
+	echo "Network interfaces checking finished. OK"
+
+	echo ""
+
+
+}
 
 # ----------------------------------------------
 # MAIN 
 # ----------------------------------------------
-# This is the main function if this script.
+# This is the main function of this script.
 # It uses functions defined above to check user,
 # Platform, Hardware, System requirements and 
 # Internet connection. Then it downloads
 # installs all neccessary packages.
 # ----------------------------------------------
-
+#
+# ----------------------------------------------
+# At first script will check
+#
+# 1. User      ->  Need to be root
+# 2. Platform  ->  Need to be Debian 7 / Debian 8 / Ubuntu 12.04 / Ubuntu 14.04 
+# 3. Hardware  ->  Need to be ARM / Intel
+# ----------------------------------------------
 check_root    # Checking user 
 get_platform  # Getting platform info
 get_hardware  # Getting hardware info
 
-
+# ----------------------------------------------
+# If script detects Physical/Virtual machine
+# then next steps will be
+# 
+# 4. Checking requirements
+# 5. Get Internet access
+# 6. Configure repositories
+# 7. Download and Install packages
+# ----------------------------------------------
 if [ "$PROCESSOR" = "Intel" ]; then 
 	check_requirements      # Checking requirements for Physical or Virtual machine
         get_dhcp_and_Internet  	# Get DHCP on eth0 or eth1 and connect to Internet
 	configure_repositories	# Prepare and update repositories
 	install_packages       	# Download and install packages	
+
+# ---------------------------------------------
+# If script detects odroid board then next 
+# steps will be
+#
+# 4. Checking if board is assembled
+# 5. Configure bridge interfaces
+# 6. Check Internet Connection
+# 7. Configure repositories
+# 8. Download and Install packages
+# ---------------------------------------------
+elif [ "$PROCESSOR" = "ARM" ]; then 
+	check_assemblance
+#	configure_bridges
+#	check_internet
+#	configure_repositories
+#	install_packages
 fi
+
+# ---------------------------------------------
+# If script reachs to this point then it's done 
+# successfully
+# ---------------------------------------------
+echo "Initialization done successfully"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
