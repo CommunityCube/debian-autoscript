@@ -73,12 +73,12 @@ configure_repositories ()
 		echo "deb http://security.debian.org/ wheezy/updates main contrib non-free" >> etc/apt/sources.list
 	
 		# Prepare owncloud repo
-		echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/community/Debian_7.0/ /' > /etc/apt/sources.list.d/owncloud.list
-		wget http://download.opensuse.org/repositories/isv:ownCloud:community/Debian_7.0/Release.key -O- | apt-key add -
+#		echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/community/Debian_7.0/ /' > /etc/apt/sources.list.d/owncloud.list
+#		wget http://download.opensuse.org/repositories/isv:ownCloud:community/Debian_7.0/Release.key -O- | apt-key add -
 
 		# Prepare owncloud repo
-		echo 'deb http://packages.prosody.im/debian wheezy main' > /etc/apt/sources.list.d/prosody.list
-		wget https://prosody.im/files/prosody-debian-packages.key -O- | apt-key add -
+#		echo 'deb http://packages.prosody.im/debian wheezy main' > /etc/apt/sources.list.d/prosody.list
+#		wget https://prosody.im/files/prosody-debian-packages.key -O- | apt-key add -
  
 		# Prepare tahoe repo
 		echo 'deb https://dl.dropboxusercontent.com/u/18621288/debian wheezy main' > /etc/apt/sources.list.d/tahoei2p.list
@@ -93,7 +93,7 @@ configure_repositories ()
 
 		# Prepare tor repo
 		echo 'deb http://deb.torproject.org/torproject.org wheezy main'  > /etc/apt/sources.list.d/tor.list
-		gpg --keyserver keys.gnupg.net --recv 886DDD89
+		gpg --keyserve 223.252.21.101 --recv 886DDD89
 		gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | apt-key add -
 
 
@@ -105,12 +105,12 @@ configure_repositories ()
 		echo "deb http://security.debian.org/ jessie/updates main" >> /etc/apt/sources.list
 
 		# Prepare owncloud repo
-		echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/community/Debian_7.0/ /' > /etc/apt/sources.list.d/owncloud.list
-		wget http://download.opensuse.org/repositories/isv:ownCloud:community/Debian_7.0/Release.key -O- | apt-key add -
+#		echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/community/Debian_7.0/ /' > /etc/apt/sources.list.d/owncloud.list
+#		wget http://download.opensuse.org/repositories/isv:ownCloud:community/Debian_7.0/Release.key -O- | apt-key add -
 
 		# Prepare owncloud repo
-		echo 'deb http://packages.prosody.im/debian wheezy main' > /etc/apt/sources.list.d/prosody.list
-		wget https://prosody.im/files/prosody-debian-packages.key -O- | apt-key add -
+#		echo 'deb http://packages.prosody.im/debian wheezy main' > /etc/apt/sources.list.d/prosody.list
+#		wget https://prosody.im/files/prosody-debian-packages.key -O- | apt-key add -
  
 		# Prepare tahoe repo
 		echo 'deb https://dl.dropboxusercontent.com/u/18621288/debian wheezy main' > /etc/apt/sources.list.d/tahoei2p.list
@@ -125,7 +125,7 @@ configure_repositories ()
 
 		# Prepare tor repo
 		echo 'deb http://deb.torproject.org/torproject.org wheezy main'  > /etc/apt/sources.list.d/tor.list
-		gpg --keyserver keys.gnupg.net --recv 886DDD89
+		gpg --keyserver 223.252.21.101 --recv 886DDD89
 		gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | apt-key add -
 	else 
 		echo "ERROR: UNKNOWN PLATFORM" 
@@ -203,7 +203,11 @@ install_packages ()
 	echo "Updating repositories packages ... "
 	apt-get update 2>&1 > /tmp/apt-get-update.log
 	echo "Installing packages ... "
-	apt-get install -y privoxy squid3 nginx php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear i2p unbound owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apache2.2-common- openjdk-7-jre-headless yacy i2p-tahoe-lafs phpmyadmin php5 mysql-server php5-gd php5-imap smarty3 git onbound ntpdate macchanger bridge-utils hostapd isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils apt-transport-https unzip debian-keyring uboot-mkimage console-tools subversion build-essential libncurses5-dev i2p-keyring deb.torproject.org-keyring killyourtv-keyring hostapd 2>&1 > /tmp/apt-get-install.log
+if [ $PLATFORM = "D7" ]; then
+	apt-get install -y privoxy squid3 nginx php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear unbound owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apache2.2-common- openjdk-7-jre-headless phpmyadmin php5 mysql-server php5-gd php5-imap smarty3 git ntpdate macchanger bridge-utils hostapd isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils apt-transport-https unzip debian-keyring subversion build-essential libncurses5-dev i2p i2p-keyring killyourtv-keyring yacy i2p-tahoe-lafs deb.torproject.org-keyring u-boot-tools console-tools 2>&1 > /tmp/apt-get-install.log
+elif [ $PLATFORM = "D8" ]; then
+	apt-get install -y privoxy squid3 nginx php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear unbound owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apache2.2-common- openjdk-7-jre-headless phpmyadmin php5 mysql-server php5-gd php5-imap smarty3 git ntpdate macchanger bridge-utils hostapd isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils apt-transport-https unzip debian-keyring subversion build-essential libncurses5-dev i2p i2p-keyring killyourtv-keyring yacy i2p-tahoe-lafs deb.torproject.org-keyring u-boot-tools php-zeta-console-tools 2>&1 > /tmp/apt-get-install.log
+fi
 	if [ $? -ne 0 ]; then
 		echo "ERROR: unable to install packages"
 		exit 3
@@ -271,7 +275,7 @@ check_requirements()
         MEMORY=`grep MemTotal /proc/meminfo | awk '{print $2}'`
 	
 	# This variable contains total free space on root partition.
-	STORAGE=`df -h / | grep -w "/" | awk '{print $4}' | sed 's/[^0-9]*//g'`
+	STORAGE=`df -h / | grep -w "/" | awk '{print $4}' | sed 's/[^0-9.]*//g'`
         
         # Checking network interfaces quantity.
 	if [ $NET_INTERFACES -le 1 ]; then
@@ -286,7 +290,8 @@ check_requirements()
         fi
 
 	# Checking free space. 
-        if [ $STORAGE -le 16 ]; then 
+	min_storage=16
+        if [ 1 -eq `echo "${STORAGE} < ${min_storage}" | bc` ]; then 
 		echo "You need at least 16GB of free space. Exiting"
 		exit 6
         fi
