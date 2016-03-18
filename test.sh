@@ -100,9 +100,9 @@ configure_repositories ()
 	elif [ $PLATFORM = "D8" ]; then
 		# Avoid macchanger asking for information
 		export DEBIAN_FRONTEND=noninteractive
-		echo "deb http://ftp.es.debian.org/debian/ jessie main" > etc/apt/sources.list
-		echo "deb http://ftp.es.debian.org/debian/ jessie-updates main" >> etc/apt/sources.list
-		echo "deb http://security.debian.org/ jessie/updates main" >> etc/apt/sources.list
+		echo "deb http://ftp.es.debian.org/debian/ jessie main" > /etc/apt/sources.list
+		echo "deb http://ftp.es.debian.org/debian/ jessie-updates main" >> /etc/apt/sources.list
+		echo "deb http://security.debian.org/ jessie/updates main" >> /etc/apt/sources.list
 
 		# Prepare owncloud repo
 		echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/community/Debian_7.0/ /' > /etc/apt/sources.list.d/owncloud.list
@@ -212,8 +212,11 @@ install_packages ()
 
 
 # ----------------------------------------------
-# This function checks hardware (ARM or INTEL).
-# It gets Processor and Hardware types and saves
+# This function checks hardware 
+# Hardware can be.
+# 1. ARM for odroid board.
+# 2. INTEL or AMD for Physical/Virtual machine.
+# Function gets Processor and Hardware types and saves
 # them in PROCESSOR and HARDWARE variables.
 # ----------------------------------------------
 get_hardware()
@@ -229,8 +232,14 @@ get_hardware()
         # Checking CPU for Intel and saving
 	# Processor and Hardware types in
 	# PROCESSOR and HARDWARE variables
-	elif grep Intel /proc/cpuinfo > /dev/null 2>&1; then 
+	elif grep Intel /proc/cpuinfo > /dev/null 2>&1;  then 
            PROCESSOR="Intel"	                             
+           HARDWARE=`dmidecode -s system-product-name`       
+        # Checking CPU for ARD and saving
+	# Processor and Hardware types in
+	# PROCESSOR and HARDWARE variables
+	elif grep AMD /proc/cpuinfo > /dev/null 2>&1;  then 
+           PROCESSOR="AMD"	                             
            HARDWARE=`dmidecode -s system-product-name`       
 	fi
 
@@ -417,7 +426,7 @@ check_assemblance()
 #
 # 1. User      ->  Need to be root
 # 2. Platform  ->  Need to be Debian 7 / Debian 8 / Ubuntu 12.04 / Ubuntu 14.04 
-# 3. Hardware  ->  Need to be ARM / Intel
+# 3. Hardware  ->  Need to be ARM / Intel or AMD
 # ----------------------------------------------
 check_root    # Checking user 
 get_platform  # Getting platform info
@@ -432,7 +441,7 @@ get_hardware  # Getting hardware info
 # 6. Configure repositories
 # 7. Download and Install packages
 # ----------------------------------------------
-if [ "$PROCESSOR" = "Intel" ]; then 
+if [ "$PROCESSOR" = "Intel" -o "$PROCESSOR" = "AMD" ]; then 
 	check_requirements      # Checking requirements for Physical or Virtual machine
         get_dhcp_and_Internet  	# Get DHCP on eth0 or eth1 and connect to Internet
 	configure_repositories	# Prepare and update repositories
