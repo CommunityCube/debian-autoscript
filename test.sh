@@ -71,6 +71,13 @@ configure_repositories ()
 		echo "deb http://ftp.us.debian.org/debian wheezy main non-free contrib" > etc/apt/sources.list
 		echo "deb http://ftp.debian.org/debian/ wheezy-updates main contrib non-free" >> etc/apt/sources.list
 		echo "deb http://security.debian.org/ wheezy/updates main contrib non-free" >> etc/apt/sources.list
+
+		# There is a need to install apt-transport-https 
+		# package before preparing third party repositories
+	echo "Updating repositories ..."
+        apt-get update 2>&1 > /tmp/apt-get-update-default.log
+ 	echo "Installing apt-transport-https ..."
+	apt-get install apt-transport-https 2>&1 > /tmp/apt-get-install-aptth.log
 	
 		# Prepare owncloud repo
 #		echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/community/Debian_7.0/ /' > /etc/apt/sources.list.d/owncloud.list
@@ -103,6 +110,14 @@ configure_repositories ()
 		echo "deb http://ftp.es.debian.org/debian/ jessie main" > /etc/apt/sources.list
 		echo "deb http://ftp.es.debian.org/debian/ jessie-updates main" >> /etc/apt/sources.list
 		echo "deb http://security.debian.org/ jessie/updates main" >> /etc/apt/sources.list
+
+		# There is a need to install apt-transport-https 
+		# package before preparing third party repositories
+	echo "Updating repositories ..."
+        apt-get update 2>&1 > /tmp/apt-get-update-default.log
+ 	echo "Installing apt-transport-https ..."
+	apt-get install apt-transport-https 2>&1 > /tmp/apt-get-install-aptth.log
+
 
 		# Prepare owncloud repo
 #		echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/community/Debian_7.0/ /' > /etc/apt/sources.list.d/owncloud.list
@@ -204,9 +219,9 @@ install_packages ()
 	apt-get update 2>&1 > /tmp/apt-get-update.log
 	echo "Installing packages ... "
 if [ $PLATFORM = "D7" ]; then
-	apt-get install -y privoxy squid3 nginx php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear unbound owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apache2.2-common- openjdk-7-jre-headless phpmyadmin php5 mysql-server php5-gd php5-imap smarty3 git ntpdate macchanger bridge-utils hostapd isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils apt-transport-https unzip debian-keyring subversion build-essential libncurses5-dev i2p i2p-keyring killyourtv-keyring yacy i2p-tahoe-lafs deb.torproject.org-keyring u-boot-tools console-tools 2>&1 > /tmp/apt-get-install.log
+	apt-get install -y privoxy squid3 nginx php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear unbound owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apache2.2-common- openjdk-7-jre-headless phpmyadmin php5 mysql-server php5-gd php5-imap smarty3 git ntpdate macchanger bridge-utils hostapd isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils unzip debian-keyring subversion build-essential libncurses5-dev i2p i2p-keyring killyourtv-keyring yacy i2p-tahoe-lafs deb.torproject.org-keyring u-boot-tools console-tools 2>&1 > /tmp/apt-get-install.log
 elif [ $PLATFORM = "D8" ]; then
-	apt-get install -y privoxy squid3 nginx php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear unbound owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apache2.2-common- openjdk-7-jre-headless phpmyadmin php5 mysql-server php5-gd php5-imap smarty3 git ntpdate macchanger bridge-utils hostapd isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils apt-transport-https unzip debian-keyring subversion build-essential libncurses5-dev i2p i2p-keyring killyourtv-keyring yacy i2p-tahoe-lafs deb.torproject.org-keyring u-boot-tools php-zeta-console-tools 2>&1 > /tmp/apt-get-install.log
+	apt-get install -y privoxy squid3 nginx php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear unbound owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apache2.2-common- openjdk-7-jre-headless phpmyadmin php5 mysql-server php5-gd php5-imap smarty3 git ntpdate macchanger bridge-utils hostapd isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils unzip debian-keyring subversion build-essential libncurses5-dev i2p i2p-keyring killyourtv-keyring yacy i2p-tahoe-lafs deb.torproject.org-keyring u-boot-tools php-zeta-console-tools 2>&1 > /tmp/apt-get-install.log
 fi
 	if [ $? -ne 0 ]; then
 		echo "ERROR: unable to install packages"
