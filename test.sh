@@ -13,6 +13,7 @@ EXTERNAL_INTERFACE="Not Detected"	# External Interface (Connected to Internet)
 #  * Ubuntu 14.04
 #  * Debian GNU/Linux 7
 #  * Debian GNU/Linux 8  
+#  * Trisquel 7
 # ----------------------------------------------
 get_platform () 
 {
@@ -26,6 +27,8 @@ get_platform ()
 		PLATFORM="D7"
 	elif cat $FILE | grep "Debian GNU/Linux 8" > /dev/null; then
 		PLATFORM="D8"
+	elif cat $FILE | grep "Trisquel GNU/Linux 7.0" > /dev/null; then
+		PLATFORM="T7"
 	else 
 		echo "ERROR: UNKNOWN PLATFORM" 
 		exit
@@ -142,6 +145,58 @@ configure_repositories ()
 		echo 'deb http://deb.torproject.org/torproject.org wheezy main'  > /etc/apt/sources.list.d/tor.list
 		gpg --keyserver 223.252.21.101 --recv 886DDD89
 		gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | apt-key add -
+
+# Preparing repositories for Trisquel GNU/Linux 7.0
+
+	elif [ $PLATFORM = "T7" ]; then
+		export DEBIAN_FRONTEND=noninteractive
+		echo "deb http://fr.archive.trisquel.info/trisquel/ belenos main" > /etc/apt/sources.list
+		echo "deb-src http://fr.archive.trisquel.info/trisquel/ belenos main" >> /etc/apt/sources.list
+		echo "deb http://fr.archive.trisquel.info/trisquel/ belenos-security main" >> /etc/apt/sources.list
+		echo "deb-src http://fr.archive.trisquel.info/trisquel/ belenos-security main" >> /etc/apt/sources.list
+		echo "deb http://fr.archive.trisquel.info/trisquel/ belenos-updates main" >> /etc/apt/sources.list
+		echo "deb-src http://fr.archive.trisquel.info/trisquel/ belenos-updates main" >> /etc/apt/sources.list
+
+		# There is a need to install apt-transport-https 
+		# package before preparing third party repositories
+		echo "Updating repositories ..."
+   		apt-get update 2>&1 > /tmp/apt-get-update-default.log
+
+		if [ $? -ne 0 ]; then
+			echo "ERROR: UNABLE TO UPDATE REPOSITORIES"
+			exit 10
+		else
+			echo "Updating done successfully"
+		fi
+	
+ 		echo "Installing apt-transport-https ..."
+		apt-get install apt-transport-https 2>&1 > /tmp/apt-get-install-aptth.log
+
+		if [ $? -ne 0 ]; then
+			echo "ERROR: UNABLE TO INSTALL PACKAGES: apt-transport-https"
+			exit 11
+		else 
+			echo "Installation done successfully"
+		fi
+
+		echo "Preparing third party repositories ..."
+		
+		# Prepare yacy repo
+		echo 'deb http://debian.yacy.net ./' > /etc/apt/sources.list.d/yacy.list
+		apt-key advanced --keyserver pgp.net.nz --recv-keys 03D886E7
+
+		# Prepare i2p repo
+		echo 'deb http://deb.i2p2.no/ stable main' > /etc/apt/sources.list.d/i2p.list
+		wget --no-check-certificate https://geti2p.net/_static/i2p-debian-repo.key.asc -O- | apt-key add -
+	
+		# Prepare tahoe repo
+		echo 'deb https://dl.dropboxusercontent.com/u/18621288/debian wheezy main' > /etc/apt/sources.list.d/tahoei2p.list
+		
+		# Prepare tor repo
+		echo 'deb http://deb.torproject.org/torproject.org wheezy main'  > /etc/apt/sources.list.d/tor.list
+		gpg --keyserver 223.252.21.101 --recv 886DDD89
+		gpg --export A3C4F0F979CAA22CDBA8F512EE8CBC9E886DDD89 | apt-key add -
+
 	else 
 		echo "ERROR: UNKNOWN PLATFORM" 
 		exit
@@ -219,9 +274,48 @@ install_packages ()
 	apt-get update 2>&1 > /tmp/apt-get-update.log
 	echo "Installing packages ... "
 if [ $PLATFORM = "D7" ]; then
-	apt-get install -y privoxy squid3 nginx php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear unbound owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apache2.2-common- openjdk-7-jre-headless phpmyadmin php5 mysql-server php5-gd php5-imap smarty3 git ntpdate macchanger bridge-utils hostapd isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils unzip debian-keyring subversion build-essential libncurses5-dev i2p i2p-keyring killyourtv-keyring yacy i2p-tahoe-lafs deb.torproject.org-keyring u-boot-tools console-tools 2>&1 > /tmp/apt-get-install.log
+	apt-get install -y privoxy squid3 nginx php5-common php5-fpm \
+	php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt \
+	php5-memcache php-xml-parser php-pear unbound owncloud \
+	apache2-mpm-prefork- apache2-utils- apache2.2-bin- \
+	apache2.2-common- openjdk-7-jre-headless phpmyadmin php5 \
+	mysql-server php5-gd php5-imap smarty3 git ntpdate macchanger \
+	bridge-utils hostapd isc-dhcp-server hostapd bridge-utils \
+	macchanger ntpdate tor bc sudo lsb-release dnsutils \
+	ca-certificates-java openssh-server ssh wireless-tools usbutils \
+	unzip debian-keyring subversion build-essential libncurses5-dev \
+	i2p i2p-keyring killyourtv-keyring yacy i2p-tahoe-lafs \
+	deb.torproject.org-keyring u-boot-tools console-tools \
+	2>&1 > /tmp/apt-get-install.log
 elif [ $PLATFORM = "D8" ]; then
-	apt-get install -y privoxy squid3 nginx php5-common php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt php5-memcache php-xml-parser php-pear unbound owncloud apache2-mpm-prefork- apache2-utils- apache2.2-bin- apache2.2-common- openjdk-7-jre-headless phpmyadmin php5 mysql-server php5-gd php5-imap smarty3 git ntpdate macchanger bridge-utils hostapd isc-dhcp-server hostapd bridge-utils macchanger ntpdate tor bc sudo lsb-release dnsutils ca-certificates-java openssh-server ssh wireless-tools usbutils unzip debian-keyring subversion build-essential libncurses5-dev i2p i2p-keyring killyourtv-keyring yacy i2p-tahoe-lafs deb.torproject.org-keyring u-boot-tools php-zeta-console-tools 2>&1 > /tmp/apt-get-install.log
+	apt-get install -y privoxy squid3 nginx php5-common php5-fpm \
+	php5-cli php5-json php5-mysql php5-curl php5-intl php5-mcrypt \
+	php5-memcache php-xml-parser php-pear unbound owncloud \
+	apache2-mpm-prefork- apache2-utils- apache2.2-bin- \
+	apache2.2-common- openjdk-7-jre-headless phpmyadmin php5 \
+	mysql-server php5-gd php5-imap smarty3 git ntpdate macchanger \
+	bridge-utils hostapd isc-dhcp-server hostapd bridge-utils \
+	macchanger ntpdate tor bc sudo lsb-release dnsutils \
+	ca-certificates-java openssh-server ssh wireless-tools usbutils \
+	unzip debian-keyring subversion build-essential libncurses5-dev \
+	i2p i2p-keyring killyourtv-keyring yacy i2p-tahoe-lafs \
+	deb.torproject.org-keyring u-boot-tools php-zeta-console-tools \
+	2>&1 > /tmp/apt-get-install.log
+elif [ $PLATFORM = "T7" ]; then
+	apt-get install -y --force-yes privoxy squid3 nginx php5-common \
+	php5-fpm php5-cli php5-json php5-mysql php5-curl php5-intl \
+	php5-mcrypt php5-memcache php-xml-parser php-pear unbound owncloud \
+	apache2-mpm-prefork- apache2-utils- apache2.2-bin- \
+	apache2.2-common- openjdk-7-jre-headless phpmyadmin php5 \
+	mysql-server php5-gd php5-imap smarty3 git ntpdate macchanger \
+	bridge-utils hostapd isc-dhcp-server hostapd bridge-utils \
+	macchanger ntpdate tor bc sudo lsb-release dnsutils \
+	ca-certificates-java openssh-server ssh wireless-tools usbutils \
+	unzip debian-keyring subversion build-essential libncurses5-dev \
+	i2p i2p-keyring killyourtv-keyring yacy i2p-tahoe-lafs \
+	deb.torproject.org-keyring u-boot-tools console-setup \
+	2>&1 > /tmp/apt-get-install.log
+
 fi
 	if [ $? -ne 0 ]; then
 		echo "ERROR: unable to install packages"
@@ -490,55 +584,5 @@ fi
 # successfully
 # ---------------------------------------------
 echo "Initialization done successfully"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#check_internet
-#install_packages
-#configure_network
-#configure_dhcp
-
-
-
-
-
-
-
-
-
-
-
-
-
-# dpkg-reconfigure locales
-
-# echo "communitycube" > /etc/hostname
-
-#cat << EOF > /etc/hosts
-#127.0.0.1       communitycube.localdomain localhost.localdomain communitycube localhost
-#::1             communitycube.localdomain localhost.localdomain communitycube localhost ip6-localhost ip6-loopback
-#fe00::0         ip6-localnet
-#ff00::0         ip6-mcastprefix
-#ff02::1         ip6-allnodes
-#ff02::2         ip6-allrouters
-#EOF
-
-
-
-
 
 exit 
