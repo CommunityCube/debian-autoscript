@@ -556,7 +556,7 @@ get_hardware  # Getting hardware info
 # 7. Download and Install packages
 # ----------------------------------------------
 if [ "$PROCESSOR" = "Intel" -o "$PROCESSOR" = "AMD" ]; then 
-#	check_requirements      # Checking requirements for Physical or Virtual machine
+	check_requirements      # Checking requirements for Physical or Virtual machine
         get_dhcp_and_Internet  	# Get DHCP on eth0 or eth1 and connect to Internet
 	configure_repositories	# Prepare and update repositories
 	install_packages       	# Download and install packages	
