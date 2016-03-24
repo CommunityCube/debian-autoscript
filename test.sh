@@ -71,9 +71,9 @@ configure_repositories ()
 	elif [ $PLATFORM = "U14" ]; then
 		exit
 	elif [ $PLATFORM = "D7" ]; then
-		echo "deb http://ftp.us.debian.org/debian wheezy main non-free contrib" > etc/apt/sources.list
-		echo "deb http://ftp.debian.org/debian/ wheezy-updates main contrib non-free" >> etc/apt/sources.list
-		echo "deb http://security.debian.org/ wheezy/updates main contrib non-free" >> etc/apt/sources.list
+		echo "deb http://ftp.us.debian.org/debian wheezy main non-free contrib" > /etc/apt/sources.list
+		echo "deb http://ftp.debian.org/debian/ wheezy-updates main contrib non-free" >> /etc/apt/sources.list
+		echo "deb http://security.debian.org/ wheezy/updates main contrib non-free" >> /etc/apt/sources.list
 
 		# There is a need to install apt-transport-https 
 		# package before preparing third party repositories
