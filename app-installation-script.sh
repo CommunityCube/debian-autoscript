@@ -33,6 +33,39 @@ check_root ()
 
 
 # ---------------------------------------------------------
+# Function to get varibales from /tmp/variables.log file
+# Variables to be initialized are:
+#   PLATFORM
+#   HARDWARE
+#   PROCESSOR
+#   EXT_INTERFACE
+#   INT_INTERFACE
+# ----------------------------------------------------------
+get_variables()
+{
+	echo "Initializing variables ..."
+	if [ -e /tmp/variables.log ]; then
+		PLATFORM=`cat /tmp/variables.log | grep "Platform" | awk {'print $2'}`
+		HARDWARE=`cat /tmp/variables.log | grep "Hardware" | awk {'print $2'}`
+		PROCESSOR=`cat /tmp/variables.log | grep "Processor" | awk {'print $2'}`
+		EXT_INTERFACE=`cat /tmp/variables.log | grep "Ext_int" | awk {'print $2'}`
+		INT_INTERFACE=`cat /tmp/variables.log | grep "Int_int" | awk {'print $2'}`
+		if [ -z "$PLATFORM" -o -z "$HARDWARE" -o -z "$PROCESSOR" \
+		     -o -z "$EXT_INTERFACE" -o -z "$INT_INTERFACE" ]; then
+			echo "Error: Can not detect variables. Exiting"
+			exit 5
+		else
+			echo "Platform:      $PLATFORM"
+			echo "Hardware:      $HARDWARE"
+			echo "Processor:     $PROCESSOR"
+			echo "Ext Interface: $EXT_INTERFACE"
+			echo "Int Interface: $INT_INTERFACE"
+		fi 
+	fi
+}
+
+
+# ---------------------------------------------------------
 # This function checks network interfaces.
 # The interface connected to network will be saved on 
 # EXT_INTERFACE variaable and other awailable interface
@@ -40,6 +73,7 @@ check_root ()
 # ---------------------------------------------------------
 get_interfaces()
 {
+	echo "Checking network interfaces ..."
 	# Getting external interface name
 	EXT_INTERFACE=`route -n | awk {'print $1 " " $8'} \
 			| grep "0.0.0.0" | awk {'print $2'}`
@@ -366,13 +400,14 @@ chmod +x /etc/rc.local
 # Block 1: Configuing Network Interfaces
 
 check_root			# Checking user
+get_variables			# Getting variables
 get_interfaces			# Getting external and internal interfaces
 configure_hosts			# Configurint hostname and /etc/hosts
 configure_interfaces		# Configuring external and internal interfaces
 
 
 
-configure_blacklists		# Configuting blacklist to block some ip addresses
-configure_iptables		# Configure iptables rules
+#configure_blacklists		# Configuting blacklist to block some ip addresses
+#configure_iptables		# Configure iptables rules
 
 
