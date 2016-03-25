@@ -1,8 +1,12 @@
 #!/bin/bash
-
-PROCESSOR="Not Detected"     		# Processor type
-HARDWARE="Not Detected"      		# Hardware type 
-EXTERNAL_INTERFACE="Not Detected"	# External Interface (Connected to Internet) 
+# ---------------------------------------------
+# Variables list
+# ---------------------------------------------
+PROCESSOR="Not Detected"   	# Processor type (ARM/Intel/AMD)
+HARDWARE="Not Detected"    	# Hardware type (Board/Physical/Virtual)
+PLATFORM="Not Detected"         # Platform type	(U12/U14/D7/D8/T7)
+EXT_INTERFACE="Not Detected"	# External Interface (Connected to Internet) 
+INT_INETRFACE="Not Detected"	# Internal Interface (Connected to local network)
 
 # ----------------------------------------------
 # This function detects platform.
@@ -348,7 +352,7 @@ get_hardware()
 	elif grep Intel /proc/cpuinfo > /dev/null 2>&1;  then 
            PROCESSOR="Intel"	                             
            HARDWARE=`dmidecode -s system-product-name`       
-        # Checking CPU for ARD and saving
+        # Checking CPU for AMD and saving
 	# Processor and Hardware types in
 	# PROCESSOR and HARDWARE variables
 	elif grep AMD /proc/cpuinfo > /dev/null 2>&1;  then 
@@ -448,10 +452,10 @@ get_dhcp_and_Internet()
 {
 	# Check internet Connection. If Connection exist then get 
 	# and save Internet side network interface name in 
-	# EXTERNAL_INTERFACE variable
+	# EXT_INTERFACE variable
 	if ping -c1 8.8.8.8 >/dev/null 2>/dev/null; then
-		EXTERNAL_INTERFACE=`route -n | awk {'print $1 " " $8'} | grep "0.0.0.0" | awk {'print $2'}`
-		echo "Internet connection established on interface $EXTERNAL_INTERFACE"
+		EXT_INTERFACE=`route -n | awk {'print $1 " " $8'} | grep "0.0.0.0" | awk {'print $2'}`
+		echo "Internet connection established on interface $EXT_INTERFACE"
 	else
 		# Checking eth0 for Internet connection
         	echo "Getting Internet access on eth0"
@@ -461,7 +465,7 @@ get_dhcp_and_Internet()
 		/etc/init.d/networking restart 
 		if ping -c1 8.8.8.8 >/dev/null 2>/dev/null; then
 			echo "Internet conection established on: eth0"	
-			EXTERNAL_INTERFACE="eth0"
+			EXT_INTERFACE="eth0"
 		else
 			echo "Warning: Unable to get Internet access on eth0"
         		# Checking eth1 for Internet connection
@@ -472,7 +476,7 @@ get_dhcp_and_Internet()
 			/etc/init.d/networking restart 
 			if ping -c1 8.8.8.8 >/dev/null 2>/dev/null; then
 				echo "Internet conection established on: eth1"	
-				EXTERNAL_INTERFACE="eth1"
+				EXT_INTERFACE="eth1"
 			else
 				echo "Warning: Unable to get Internet access on eth1"
 				echo "Please plugin Internet cable to eth0 or eth1 and enable DHCP on gateway"
@@ -481,6 +485,10 @@ get_dhcp_and_Internet()
 			fi
 		fi
 	fi
+	# Getting internal interface name
+        INT_INTERFACE=`ls /sys/class/net/ | grep -w 'eth0\|eth1\|wlan0\|wlan1' \
+	| grep -v $EXT_INTERFACE | sed -n '1p'`
+        echo "Internal interface: $INT_INTERFACE"
 }
 
 # ----------------------------------------------
@@ -526,6 +534,35 @@ check_assemblance()
 }
 
 # ----------------------------------------------
+# This function saves variables in file, so
+# parametization script can read and use these 
+# values
+# Variables to save are:
+#   PLATFORM
+#   HARDWARE
+#   PROCESSOR
+#   EXT_INTERFACE
+#   INT_INTERFACE
+# ----------------------------------------------  
+save_variables()
+{
+        echo "Saving variables ..."
+        echo -e \
+"Platform: $PLATFORM\n\
+Hardware: $HARDWARE\n\
+Processor: $PROCESSOR\n\
+Ext_interface: $EXT_INTERFACE\n\
+Int_interface: $INT_INTERFACE" \
+                 > /tmp/variables.log
+        if [ $? -ne  0 ]; then
+                echo "Error: Unable to save variables. Exiting"
+                exit 11
+        fi
+}
+
+
+
+# ----------------------------------------------
 # MAIN 
 # ----------------------------------------------
 # This is the main function of this script.
@@ -542,10 +579,10 @@ check_assemblance()
 # 2. Platform  ->  Need to be Debian 7 / Debian 8 / Ubuntu 12.04 / Ubuntu 14.04 
 # 3. Hardware  ->  Need to be ARM / Intel or AMD
 # ----------------------------------------------
-check_root    # Checking user 
-get_platform  # Getting platform info
-get_hardware  # Getting hardware info
-
+check_root    	# Checking user 
+get_platform  	# Getting platform info
+get_hardware  	# Getting hardware info
+save_variables	# Save detected variables
 # ----------------------------------------------
 # If script detects Physical/Virtual machine
 # then next steps will be
