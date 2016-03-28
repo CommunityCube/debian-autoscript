@@ -242,7 +242,7 @@ fi
 
 
 # ---------------------------------------------------------
-# Function to configure iptables
+# Function to configure blacklists
 # ---------------------------------------------------------
 configre_blacklists()
 {
@@ -352,10 +352,14 @@ iptables -t nat -A PREROUTING -i br1 -p tcp -d 10.0.0.1 --dport 80 -j ACCEPT
 iptables -t nat -A PREROUTING -i br1 -p tcp -d 10.0.0.1 --dport 443 -j ACCEPT
 iptables -t nat -A PREROUTING -i br1 -p tcp -d 10.0.0.1 --dport 7000 -j ACCEPT
 
-#Redirect to Local Nginx server 
+# Redirect to Local Nginx server
+# Should be handled by Yacy 
 iptables -t nat -I PREROUTING -i br1 -d 10.0.0.251 -p tcp -j DNAT --to 10.0.0.1:80  
+# Should be handled by Friendica
 iptables -t nat -I PREROUTING -i br1 -d 10.0.0.252 -p tcp -j DNAT --to 10.0.0.1:80 
+# Should be handled by Owncloud
 iptables -t nat -I PREROUTING -i br1 -d 10.0.0.253 -p tcp -j DNAT --to 10.0.0.1:80 
+# Should be handled by Mailpile
 iptables -t nat -I PREROUTING -i br1 -d 10.0.0.254 -p tcp -j DNAT --to 10.0.0.1:80 
 
 #i2p petitions 
@@ -393,6 +397,93 @@ chmod +x /etc/rc.local
 
 
 # ---------------------------------------------------------
+# Function to configure Unbound DNS server
+# ---------------------------------------------------------
+configure_unbound() 
+{
+echo '# Unbound configuration file for Debian.
+#
+# See the unbound.conf(5) man page.
+#
+# See /usr/share/doc/unbound/examples/unbound.conf for a commented
+# reference config file.
+
+server:
+    # The following line will configure unbound to perform cryptographic
+    # DNSSEC validation using the root trust anchor.
+    interface: 10.0.0.1
+    access-control: 10.0.0.0/8 allow
+    access-control: 127.0.0.1/8 allow
+    access-control: 0.0.0.0/0 refuse
+#    access-control
+#    auto-trust-anchor-file: "/var/lib/unbound/root.key"
+    do-not-query-localhost: no
+#domain-insecure: "onion"
+#private-domain: "onion"
+
+#Local destinations
+local-zone: "local." static
+local-data: "communitycube.local. IN A 10.0.0.1"
+local-data: "i2p.local. IN A 10.0.0.1"
+local-data: "tahoe.local. IN A 10.0.0.1"' > /etc/unbound/unbound.conf-static
+
+for i in $(ls /var/lib/tor/hidden_service/)
+do
+
+cat << EOF >>  /etc/unbound/unbound.conf-static
+local-data: "$i.local.  IN A 10.0.0.1"
+EOF
+
+done
+
+for i in $(ls /var/lib/tor/hidden_service/)
+do
+
+hn="$(cat /var/lib/tor/hidden_service/$i/hostname 2>/dev/null)"
+
+if [ -n "$hn" ]; then
+cat << EOF >>  /etc/unbound/unbound.conf-static
+
+local-zone: "$hn." static
+local-data: "$hn. IN A 10.0.0.1"
+EOF
+
+fi
+
+done
+
+echo '
+#I2P domains
+local-zone: "i2p" redirect
+local-data: "i2p A 10.191.0.1"' >> /etc/unbound/unbound.conf-static
+
+echo '#Forward rest of zones to TOR
+forward-zone:
+    name: "."
+    forward-addr: 10.0.0.1@9053' > /etc/unbound/forward.conf
+
+cat /etc/unbound/unbound.conf-static > /etc/unbound/unbound.conf
+echo "include: /etc/unbound/forward.conf" >> /etc/unbound/unbound.conf
+
+# There is a need to stop dnsmasq before starting unbound
+kill -9 `ps aux | grep dnsmasq | awk {'print $2'} | sed -n '1p'`
+echo "kill -9 `ps aux | grep dnsmasq | awk {'print $2'} | sed -n '1p'` >> /etc/rc.local"
+
+service unbound restart
+ if [ $? -ne 0 ]; then
+	echo "Error: Unable to start unbound DNS server. Exiting"
+	exit 3
+ else
+	echo "Unbound DNS server successfully started."
+ fi
+}
+
+
+
+
+
+
+# ---------------------------------------------------------
 # ************************ MAIN ***************************
 # This is the main function on this script
 # ---------------------------------------------------------
@@ -404,7 +495,7 @@ get_variables			# Getting variables
 get_interfaces			# Getting external and internal interfaces
 configure_hosts			# Configurint hostname and /etc/hosts
 configure_interfaces		# Configuring external and internal interfaces
-
+configure_unbound		# Configure unbound DNS server
 
 
 #configure_blacklists		# Configuting blacklist to block some ip addresses
