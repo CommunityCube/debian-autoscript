@@ -61,6 +61,9 @@ get_variables()
 			echo "Ext Interface: $EXT_INTERFACE"
 			echo "Int Interface: $INT_INTERFACE"
 		fi 
+	else 
+		echo "Error: Can not find variables file. Exiting"
+		exit 6
 	fi
 }
 
@@ -76,11 +79,13 @@ get_interfaces()
 	echo "Checking network interfaces ..."
 	# Getting external interface name
 	EXT_INTERFACE=`route -n | awk {'print $1 " " $8'} \
-			| grep "0.0.0.0" | awk {'print $2'}`
+			| grep -w "0.0.0.0" | awk {'print $2'}`
 	echo "External interface: $EXT_INTERFACE"
 	
 	# Getting internal interface name
-	INT_INTERFACE=`ls /sys/class/net/ | grep -w 'eth0\|eth1\|wlan0\|wlan1' | grep -v $EXT_INTERFACE | sed -n '1p'`
+	INT_INTERFACE=`ls /sys/class/net/ | \
+        grep -w 'eth0\|eth1\|wlan0\|wlan1' | \
+	grep -v '$EXT_INTERFACE' | sed -n '1p'` 
 	echo "Internal interface: $INT_INTERFACE"
 }
 
@@ -397,6 +402,68 @@ chmod +x /etc/rc.local
 
 
 # ---------------------------------------------------------
+# Function to configure TOR
+# ---------------------------------------------------------
+configure_tor()
+{
+echo "Configuring Tor server"
+tordir=/var/lib/tor/hidden_service
+for i in yacy owncloud prosody friendica mailpile box
+do
+
+# Changing user and group to debian-tor
+mkdir -p $tordir/$i
+chown debian-tor:debian-tor $tordir/$i -R
+rm -f $tordir/$i/*
+
+#Changing permission to 2740 "rwxr-s---"
+chmod 2700 $tordir/*
+
+done
+
+#Changeing RUN_DAEMON to yes
+# waitakey
+# $EDITOR /etc/default/tor 
+sed "s~RUN_DAEMON=.*~RUN_DAEMON=\"yes\"~g" -i /etc/default/tor
+
+
+rm -f /etc/tor/torrc
+cp /usr/share/tor/tor-service-defaults-torrc /etc/tor/torrc
+
+echo "Configuring Tor hidden services"
+
+echo "
+HiddenServiceDir /var/lib/tor/hidden_service/yacy
+HiddenServicePort 80 127.0.0.1:8090
+
+HiddenServiceDir /var/lib/tor/hidden_service/owncloud
+HiddenServicePort 80 127.0.0.1:7070
+HiddenServicePort 443 127.0.0.1:443
+
+HiddenServiceDir /var/lib/tor/hidden_service/friendica
+HiddenServicePort 80 127.0.0.1:8181
+HiddenServicePort 443 127.0.0.1:443
+
+HiddenServiceDir /var/lib/tor/hidden_service/prosody
+HiddenServicePort 5222 127.0.0.1:5222
+HiddenServicePort 5269 127.0.0.1:5269
+
+DNSPort   9053
+DNSListenAddress 10.0.0.1
+VirtualAddrNetworkIPv4 10.192.0.0/16
+AutomapHostsOnResolve 1
+TransPort 9040
+TransListenAddress 10.0.0.1
+SocksPort 9050 # what port to open for local application connectio$
+SocksBindAddress 127.0.0.1 # accept connections only from localhost
+AllowUnverifiedNodes middle,rendezvous
+#Log notice syslog" >>  /etc/tor/torrc
+
+service tor start
+}
+
+
+# ---------------------------------------------------------
 # Function to configure Unbound DNS server
 # ---------------------------------------------------------
 configure_unbound() 
@@ -466,16 +533,22 @@ cat /etc/unbound/unbound.conf-static > /etc/unbound/unbound.conf
 echo "include: /etc/unbound/forward.conf" >> /etc/unbound/unbound.conf
 
 # There is a need to stop dnsmasq before starting unbound
-kill -9 `ps aux | grep dnsmasq | awk {'print $2'} | sed -n '1p'`
-echo "kill -9 `ps aux | grep dnsmasq | awk {'print $2'} | sed -n '1p'` >> /etc/rc.local"
+echo "Stoping dnsmasq ..."
+if ps aux | grep -w 'dnsmasq' | grep -v 'grep' > /dev/null;   then
+	kill -9 `ps aux | grep dnsmasq | awk {'print $2'} | sed -n '1p'`
+fi
+     echo "kill -9 \`ps aux | grep dnsmasq | awk {'print $2'} | sed -n '1p'\`" \
+     >> /etc/rc.local
+	echo "service unbound restart" >> /etc/rc.local
 
+echo "Starting Unbound DNS server ..."
 service unbound restart
- if [ $? -ne 0 ]; then
+if ps aux | grep -w 'unbound' | grep -v 'grep' > /dev/null; then
+	echo "Unbound DNS server successfully started."
+else
 	echo "Error: Unable to start unbound DNS server. Exiting"
 	exit 3
- else
-	echo "Unbound DNS server successfully started."
- fi
+fi
 }
 
 
@@ -495,10 +568,11 @@ get_variables			# Getting variables
 get_interfaces			# Getting external and internal interfaces
 configure_hosts			# Configurint hostname and /etc/hosts
 configure_interfaces		# Configuring external and internal interfaces
-configure_unbound		# Configure unbound DNS server
+configure_tor			# Configuring TOR server
+configure_unbound		# Configuring unbound DNS server
 
 
-#configure_blacklists		# Configuting blacklist to block some ip addresses
-#configure_iptables		# Configure iptables rules
+#configure_blacklists		# Configuring blacklist to block some ip addresses
+#configure_iptables		# Configuring iptables rules
 
 
