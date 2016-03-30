@@ -408,20 +408,20 @@ configure_tor()
 {
 echo "Configuring Tor server"
 tordir=/var/lib/tor/hidden_service
-for i in yacy owncloud prosody friendica mailpile box
+for i in yacy owncloud prosody friendica mailpile 
 do
 
-# Changing user and group to debian-tor
+# Setting user and group to debian-tor
 mkdir -p $tordir/$i
 chown debian-tor:debian-tor $tordir/$i -R
 rm -f $tordir/$i/*
 
-#Changing permission to 2740 "rwxr-s---"
+# Setting permission to 2740 "rwxr-s---"
 chmod 2700 $tordir/*
 
 done
 
-#Changeing RUN_DAEMON to yes
+# Setting RUN_DAEMON to yes
 # waitakey
 # $EDITOR /etc/default/tor 
 sed "s~RUN_DAEMON=.*~RUN_DAEMON=\"yes\"~g" -i /etc/default/tor
@@ -440,13 +440,18 @@ HiddenServiceDir /var/lib/tor/hidden_service/owncloud
 HiddenServicePort 80 127.0.0.1:7070
 HiddenServicePort 443 127.0.0.1:443
 
+HiddenServiceDir /var/lib/tor/hidden_service/prosody
+HiddenServicePort 5222 127.0.0.1:5222
+HiddenServicePort 5269 127.0.0.1:5269
+
 HiddenServiceDir /var/lib/tor/hidden_service/friendica
 HiddenServicePort 80 127.0.0.1:8181
 HiddenServicePort 443 127.0.0.1:443
 
-HiddenServiceDir /var/lib/tor/hidden_service/prosody
-HiddenServicePort 5222 127.0.0.1:5222
-HiddenServicePort 5269 127.0.0.1:5269
+HiddenServiceDir /var/lib/tor/hidden_service/mailpile
+HiddenServicePort 33411 127.0.0.1:33411
+
+
 
 DNSPort   9053
 DNSListenAddress 10.0.0.1
@@ -459,7 +464,8 @@ SocksBindAddress 127.0.0.1 # accept connections only from localhost
 AllowUnverifiedNodes middle,rendezvous
 #Log notice syslog" >>  /etc/tor/torrc
 
-service tor start
+service tor restart
+sleep 2
 }
 
 
@@ -495,28 +501,22 @@ local-data: "i2p.local. IN A 10.0.0.1"
 local-data: "tahoe.local. IN A 10.0.0.1"' > /etc/unbound/unbound.conf-static
 
 for i in $(ls /var/lib/tor/hidden_service/)
-do
-
-cat << EOF >>  /etc/unbound/unbound.conf-static
+	do
+	cat << EOF >>  /etc/unbound/unbound.conf-static
 local-data: "$i.local.  IN A 10.0.0.1"
 EOF
-
 done
 
 for i in $(ls /var/lib/tor/hidden_service/)
-do
-
-hn="$(cat /var/lib/tor/hidden_service/$i/hostname 2>/dev/null)"
-
-if [ -n "$hn" ]; then
-cat << EOF >>  /etc/unbound/unbound.conf-static
-
+	do
+	hn="$(cat /var/lib/tor/hidden_service/$i/hostname 2>/dev/null )"
+	
+	if [ -n "$hn" ]; then
+		cat << EOF >>  /etc/unbound/unbound.conf-static
 local-zone: "$hn." static
 local-data: "$hn. IN A 10.0.0.1"
 EOF
-
-fi
-
+	fi
 done
 
 echo '
