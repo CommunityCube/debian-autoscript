@@ -470,6 +470,20 @@ sleep 2
 
 
 # ---------------------------------------------------------
+# Function to configure I2P services
+# ---------------------------------------------------------
+configure_i2p()
+{
+echo "Configuring i2p services ..."
+echo "Change RUN_DAEMON to true"
+# waitakey
+# $EDITOR /etc/default/i2p
+sed "s~RUN_DAEMON=.*~RUN_DAEMON=\"true\"~g" -i /etc/default/i2p
+service i2p restart
+}
+
+
+# ---------------------------------------------------------
 # Function to configure Unbound DNS server
 # ---------------------------------------------------------
 configure_unbound() 
@@ -484,12 +498,71 @@ echo '# Unbound configuration file for Debian.
 server:
     # The following line will configure unbound to perform cryptographic
     # DNSSEC validation using the root trust anchor.
-    interface: 10.0.0.1
+   
+    # Specify the interface to answer queries from by ip address.
+    interface: 10.0.2.15
+
+    # Port to answer queries
+    port: 53
+
+    # Serve ipv4 requests
+    do-ipv4: yes
+
+    # Serve ipv6 requests
+    do-ipv6: no
+
+    # Enable UDP
+    do-udp: yes
+
+    # Enable TCP
+    do-tcp: yes
+
+    # Not to answer id.server and hostname.bind queries
+    hide-identity: yes
+
+    # Not to answer version.server and version.bind queries
+    hide-version: yes
+
+    # Use 0x20-encoded random bits in the query 
+    use-cups-for-id: yes
+
+    # Cache minimum time to live
+    Cache-min-ttl: 3600
+
+    # Cache maximum time to live
+    cache-max-ttl: 86400
+
+    # Perform prefetching
+    prefetch: yes
+
+    # Number of threads 
+    num-threads: 2
+
+    ## Unbound optimization ##
+
+    # Number od slabs
+    msg-cache-slabs: 4
+    rrset-cache-slabs: 4
+    infra-cache-slabs: 4
+    key-cache-slabs: 4
+
+    # Size pf cache memory
+    rrset-cache-size: 128m
+    msg-cache-size: 64m
+
+    # Buffer size for UDP port 53
+    so-rcvbuf: 1m
+
+    # Unwanted replies maximum number
+    unwanted-reply-threshold: 10000
+
+    # Define which network ips are allowed to make queries to this server.
     access-control: 10.0.0.0/8 allow
     access-control: 127.0.0.1/8 allow
     access-control: 0.0.0.0/0 refuse
-#    access-control
-#    auto-trust-anchor-file: "/var/lib/unbound/root.key"
+
+
+    # auto-trust-anchor-file: "/var/lib/unbound/root.key"
     do-not-query-localhost: no
 #domain-insecure: "onion"
 #private-domain: "onion"
@@ -498,11 +571,11 @@ server:
 local-zone: "local." static
 local-data: "communitycube.local. IN A 10.0.0.1"
 local-data: "i2p.local. IN A 10.0.0.1"
-local-data: "tahoe.local. IN A 10.0.0.1"' > /etc/unbound/unbound.conf-static
+local-data: "tahoe.local. IN A 10.0.0.1"' > /etc/unbound/unbound.conf
 
 for i in $(ls /var/lib/tor/hidden_service/)
 	do
-	cat << EOF >>  /etc/unbound/unbound.conf-static
+	cat << EOF >>  /etc/unbound/unbound.conf
 local-data: "$i.local.  IN A 10.0.0.1"
 EOF
 done
@@ -512,7 +585,7 @@ for i in $(ls /var/lib/tor/hidden_service/)
 	hn="$(cat /var/lib/tor/hidden_service/$i/hostname 2>/dev/null )"
 	
 	if [ -n "$hn" ]; then
-		cat << EOF >>  /etc/unbound/unbound.conf-static
+		cat << EOF >>  /etc/unbound/unbound.conf
 local-zone: "$hn." static
 local-data: "$hn. IN A 10.0.0.1"
 EOF
@@ -520,17 +593,20 @@ EOF
 done
 
 echo '
-#I2P domains
+# I2P domains will be resolved us 10.191.0.1 
 local-zone: "i2p" redirect
-local-data: "i2p A 10.191.0.1"' >> /etc/unbound/unbound.conf-static
+local-data: "i2p A 10.191.0.1"
 
-echo '#Forward rest of zones to TOR
+# .ounin domains will be resolved by TOR DNS 
+forward-zone:
+    name: ".onion"
+    forward-addr: 10.0.0.1@9053
+
+# Forward rest of zones to DjDNS
 forward-zone:
     name: "."
-    forward-addr: 10.0.0.1@9053' > /etc/unbound/forward.conf
-
-cat /etc/unbound/unbound.conf-static > /etc/unbound/unbound.conf
-echo "include: /etc/unbound/forward.conf" >> /etc/unbound/unbound.conf
+    forward-addr: 10.0.0.1@8053
+' >> /etc/unbound/unbound.conf
 
 # There is a need to stop dnsmasq before starting unbound
 echo "Stoping dnsmasq ..."
@@ -568,7 +644,13 @@ get_variables			# Getting variables
 get_interfaces			# Getting external and internal interfaces
 configure_hosts			# Configurint hostname and /etc/hosts
 configure_interfaces		# Configuring external and internal interfaces
+
+
+
+# Block 2: Configuring services
+
 configure_tor			# Configuring TOR server
+configure_i2p			# Configuring i2p services
 configure_unbound		# Configuring unbound DNS server
 
 
